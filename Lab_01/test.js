@@ -1,5 +1,5 @@
 /**
- * Created by Louve on 09.10.2015.
+ * Created by Katarzyna Sosnowska on 09.10.2015.
  */
 
 // Funkcja pokazujaca tytul strony
