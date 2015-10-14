@@ -67,22 +67,23 @@ function polygon(ctx, x, y, r, n){
 }
 
 // rysuje gwiazdki
+// ...no nie do koñca...
 function doodle(ctx, x, y, r, n, k){
-    var v = {};
+    var v = [];
+    var p = {"coorX":0, "coorY":0};
     // tworze liste wierzcholkow wielokata foremnego
-    for(var i = 1; i <= n; i += 1){
-        var p = {};
-        p.x = x + r * Math.cos(i * 2 * Math.PI / n);
-        p.y = y + r * Math.sin(i * 2 * Math.PI / n);
-        v[i] = p;
+    for(var i = 0; i <= n; i += 1){
+        p["coorX"] = x + r * Math.cos(i * 2 * Math.PI / n);
+        p["coorY"] = y + r * Math.sin(i * 2 * Math.PI / n);
+        v[i] = {coorX: p["coorX"], coorY: p["coorY"]};
     }
 
     ctx.beginPath();
-    ctx.moveTo((v[0]).x, (v[0]).y);     // PROBLEM - jak odzyskac informacje o wspolrzednych punktu
-    var i = 1;
+    ctx.moveTo(v[0]["coorX"], v[0]["coorY"]);
+    i = 1;
     while((i*k - 1)%n != 0){
         var j = (i*k - 1)%n;
-        ctx.lineTo((v[j]).x, (v[j]).y); // PROBLEM - jak powyzej
+        ctx.lineTo(v[j]["coorX"], v[j]["coorY"]);
         i += 1;
     }
     ctx.closePath();
