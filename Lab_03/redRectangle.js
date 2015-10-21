@@ -2,8 +2,6 @@
  * Created by Louve on 2015-10-21.
  */
 
-/* WebGL Programming guide - ksi¹¿ek do WebGL (aczkolwiek du¿o upraszczania jest) */
-
 var VSHADER_SOURCE =
     'void main() {\n' +
     '   gl_Position = vec4(0.0, 0.0, 0.0, 1.0);\n' +

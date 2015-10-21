@@ -2,8 +2,6 @@
  * Created by Louve on 2015-10-21.
  */
 
-/* WebGL Programming guide - ksi¹¿ek do WebGL (aczkolwiek du¿o upraszczania jest) */
-
 var VSHADER_SOURCE = 'attribute vec3 position; void main(){ gl_Position = vec4(position, 1.0); }\n';
 
 var FSHADER_SOURCE = 'precision mediump float; void main(void){ gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0); }';

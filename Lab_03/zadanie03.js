@@ -2,8 +2,6 @@
  * Created by Louve on 2015-10-21.
  */
 
-/* WebGL Programming guide - ksi¹¿ek do WebGL (aczkolwiek du¿o upraszczania jest) */
-
 var VSHADER_SOURCE =
     'attribute vec3 position;\n' +
     'void main(void){\n' +
@@ -35,7 +33,6 @@ function drawPoints(){
     gl.clearDepth(1.0);
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 
-
     var pixelShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(pixelShader, FSHADER_SOURCE);
     gl.compileShader(pixelShader);
@@ -53,29 +50,20 @@ function drawPoints(){
     gl.useProgram(program);
     gl.program = program;
 
-
-
     program.position = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(program.position);
 
     var pointsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
-    /*
-    var vertices = [
-        0.0, 0.7, 0.0,
-        -0.7, -0.7, 0.0,
-        0.7, -0.7, 0.0,
-        0.5, 0.3, -0.4,
-        0.2, -0.3, 0.2
-    ]*/
+    var pointsAmount = 10;
     var vertices = []
-    for(var i = 0; i < 3*5; i++){
+    for(var i = 0; i < 3 * pointsAmount; i++){
         vertices.push(Math.random() * 2 - 1);
     }
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     pointsBuffer.itemSize = 3;
-    pointsBuffer.numItems = 5;
+    pointsBuffer.numItems = pointsAmount;
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
