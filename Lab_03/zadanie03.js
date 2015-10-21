@@ -60,14 +60,18 @@ function drawPoints(){
 
     var pointsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
+    /*
     var vertices = [
         0.0, 0.7, 0.0,
         -0.7, -0.7, 0.0,
         0.7, -0.7, 0.0,
         0.5, 0.3, -0.4,
         0.2, -0.3, 0.2
-    ]
-
+    ]*/
+    var vertices = []
+    for(var i = 0; i < 3*5; i++){
+        vertices.push(Math.random() * 2 - 1);
+    }
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     pointsBuffer.itemSize = 3;
