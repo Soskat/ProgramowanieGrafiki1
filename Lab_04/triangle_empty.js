@@ -16,7 +16,7 @@ var FSHADER_SOURCE =
     '}\n';
 
 
-function drawPoints(){
+function drawStuff(){
     var canvas = document.getElementById("MyFirstCanvas");
     var gl = canvas.getContext("webgl");
 
@@ -55,19 +55,20 @@ function drawPoints(){
 
     var pointsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
-    var pointsAmount = 10;
-    var vertices = []
-    for(var i = 0; i < 3 * pointsAmount; i++){
-        vertices.push(Math.random() * 2 - 1);
-    }
+
+    var vertices = [
+        0, 0.5,
+        0.5, -0.5,
+        0.5, -0.5,
+        -0.5, -0.5,
+        -0.5, -0.5,
+        0, 0.5,
+    ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    pointsBuffer.itemSize = 3;
-    pointsBuffer.numItems = pointsAmount;
-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
-    gl.vertexAttribPointer(program.position, pointsBuffer.itemSize, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.POINTS, 0, pointsBuffer.numItems);
+    gl.vertexAttribPointer(program.position, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.LINES, 0, 6);
 }
