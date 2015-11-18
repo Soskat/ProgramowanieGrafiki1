@@ -9,6 +9,7 @@ var VSHADER_SOURCE =
     '   gl_Position.x = vec4(position, 1.0).x * CosB - vec4(position, 1.0).y * SinB;\n' +
     '   gl_Position.y = vec4(position, 1.0).x * SinB + vec4(position, 1.0).y * CosB;\n' +
     '   gl_Position.z = vec4(position, 1.0).z;\n' +
+    '   gl_Position.w = 1.0;\n' +
     '}\n';
 
 var FSHADER_SOURCE =
