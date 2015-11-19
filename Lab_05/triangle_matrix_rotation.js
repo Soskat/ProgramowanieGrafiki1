@@ -65,7 +65,7 @@ function drawStuff(){
         sinB, cosB, 0.0, 0.0,
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
-    ])
+    ]);
 
     var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');
 
@@ -78,7 +78,7 @@ function drawStuff(){
         0, 0.2,
         0.2, -0.2,
         -0.2, -0.2,
-        0, 0.2,
+        0, 0.2
     ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
