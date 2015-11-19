@@ -41,9 +41,7 @@ function drawStuff(){
     gl.shaderSource(vertexShader, VSHADER_SOURCE);
     gl.compileShader(vertexShader);
 
-
     console.log(gl.getShaderInfoLog((vertexShader)));
-
 
     var program = gl.createProgram();
 
@@ -57,9 +55,7 @@ function drawStuff(){
     program.position = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(program.position);
 
-
-
-    var ANGLE = 90.0;
+    var ANGLE = 122.0;
     var radian = Math.PI * ANGLE  / 180.0;  // convert to radians
     var cosB = Math.cos(radian);
     var sinB = Math.sin(radian);
@@ -74,11 +70,6 @@ function drawStuff(){
     var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');
 
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-
-
-
-
-
 
     var pointsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
