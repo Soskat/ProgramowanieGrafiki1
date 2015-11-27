@@ -11,7 +11,6 @@ var VSHADER_SOURCE =
     '}\n';
 
 var FSHADER_SOURCE =
-    'precision mediump float;\n' +
     'void main(void){\n' +
     '   gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0);\n' +
     '}\n';
@@ -23,7 +22,6 @@ function animate(angle){
     var now = Date.now();
     var elapsed = now - g_last; // milisec
     g_last = now;
-
     var newAngle = angle + (ANGLE_STEP * elapsed) / 1000.0;
     return newAngle %= 360;
 }
@@ -40,8 +38,10 @@ function setNewRotateMatrix(angle, x, y, z){
     newMatrix[1] = sinB;
     newMatrix[4] = -sinB;
     newMatrix[5] = cosB;
+    newMatrix[10] = 1.0;
+    newMatrix[15] = 1.0;
 
-    console.log(newMatrix);
+    //console.log(newMatrix);
 }
 
 function draw(gl, n, currentAngle, u_ModelMatrix){
@@ -54,7 +54,6 @@ function draw(gl, n, currentAngle, u_ModelMatrix){
 
 
 function drawStuff(){
-
     var currentAngle = 0.0;
 
     var canvas = document.getElementById("MyFirstCanvas");
@@ -133,7 +132,6 @@ function drawStuff(){
     gl.uniformMatrix4fv(tMatrix, false, newMatrix);
 
     gl.drawArrays(gl.TRIANGLES, 0, pointsBuffer.numItems);
-
 
 
     var tick = function(){
