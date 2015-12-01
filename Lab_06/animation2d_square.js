@@ -5,9 +5,10 @@
 
 var VSHADER_SOURCE =
     'attribute vec3 position;\n' +
+    'uniform mat4 rmatrix;\n' +
     'uniform mat4 tmatrix;\n' +
     'void main(void){\n' +
-    '   gl_Position = vec4(position, 1.0) * tmatrix;\n' +
+    '   gl_Position = vec4(position, 1.0) * rmatrix * tmatrix;\n' +
     '}\n';
 
 var FSHADER_SOURCE =
@@ -15,11 +16,13 @@ var FSHADER_SOURCE =
     '   gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0);\n' +
     '}\n';
 
-
-var newMatrix = new Float32Array(16);   // zmienna globalna
-var transMatrix = new Float32Array(16); // zmienna globalna
+// zmienne globalne:
+var rotMatrix = new Float32Array(16);   // macierz obrotu
+var transMatrix = new Float32Array(16); // macierz translacji
 var g_last = Date.now();
 var Tx = 0.0, Ty = 0.0, Tz = 0.0;
+var currAngle = 0.0;
+
 
 // Animacja kata obrotu:
 function animateAngle(angle){
@@ -37,9 +40,33 @@ function animatePosition(){
     var now = Date.now();
     var elapsed = now - g_last; // milisec
     g_last = now;
+
     Tx = Tx + (STEP * elapsed) / 1000.0;
     Ty = Ty + (STEP * elapsed) / 1000.0;
-    Tz = Tz + (STEP * elapsed) / 1000.0;
+    //Tz = Tz + (STEP * elapsed) / 1000.0;
+
+    if(Tx > 1) Tx *= -1.0;
+    if(Ty > 1) Ty *= -1.0;
+    //if(Tz > 1) Tz *= -1.0;
+}
+
+// Animacja kwadratu
+function animateSquare(){
+    var ANGLE_STEP = 45.0;
+    var STEP = 0.2;
+    var now = Date.now();
+    var elapsed = now - g_last; // milisec
+    g_last = now;
+
+    currAngle = (currAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
+
+    Tx = Tx + (STEP * elapsed) / 1000.0;
+    Ty = Ty + (STEP * elapsed) / 1000.0;
+    //Tz = Tz + (STEP * elapsed) / 1000.0;
+
+    if(Tx > 1) Tx *= -1.0;
+    if(Ty > 1) Ty *= -1.0;
+    //if(Tz > 1) Tz *= -1.0;
 }
 
 // Ustawianie macierzy rotacji:
@@ -48,30 +75,29 @@ function setNewRotateMatrix(angle){
     var cosB = Math.cos(radian);
     var sinB = Math.sin(radian);
     // Elementy macierzy numerowane sa kolumnami!
-    newMatrix[0] = cosB;
-    newMatrix[1] = sinB;
-    newMatrix[4] = -sinB;
-    newMatrix[5] = cosB;
-    newMatrix[10] = 1.0;
-    newMatrix[15] = 1.0;
+    rotMatrix[0] = cosB;
+    rotMatrix[1] = sinB;
+    rotMatrix[4] = -sinB;
+    rotMatrix[5] = cosB;
+    rotMatrix[10] = 1.0;
+    rotMatrix[15] = 1.0;
 }
 
 // Ustawianie macierzy translacji:
 function setNewTranslateMatrix(Tx, Ty, Tz){
     transMatrix[0] = 1.0;
+    transMatrix[3] = Tx;
     transMatrix[5] = 1.0;
+    transMatrix[7] = Ty;
     transMatrix[10] = 1.0;
-    transMatrix[12] = Tx;
-    transMatrix[13] = Ty;
-    transMatrix[14] = Tz;
+    transMatrix[11] = Tz;
     transMatrix[15] = 1.0;
 }
 
 // Rysowanie rotacji (aplikowanie macierzy rotacji):
 function drawRotation(gl, n, currentAngle, u_ModelMatrix){
     setNewRotateMatrix(currentAngle);
-    gl.uniformMatrix4fv(u_ModelMatrix, false, newMatrix);
-
+    gl.uniformMatrix4fv(u_ModelMatrix, false, rotMatrix);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, n);
 }
@@ -80,14 +106,24 @@ function drawRotation(gl, n, currentAngle, u_ModelMatrix){
 function drawTranslation(gl, n, Tx, Ty, Tz, u_ModelMatrix){
     setNewTranslateMatrix(Tx, Ty, Tz);
     gl.uniformMatrix4fv(u_ModelMatrix, false, transMatrix);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, n);
+}
+
+// Rysowanie przeksztalcen kwadratu (rotacja + translacja)
+function drawSquare(gl, n, u_r_ModelMatrix, u_t_ModelMatrix){
+    setNewRotateMatrix(currAngle);
+    setNewTranslateMatrix(Tx,Ty,Tz);
+
+    gl.uniformMatrix4fv(u_r_ModelMatrix, false, rotMatrix);
+    gl.uniformMatrix4fv(u_t_ModelMatrix, false, transMatrix);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 
+// Rysowanie wszystkiego na Canvasie
 function drawStuff(){
-    var currentAngle = 0.0;
-
     var canvas = document.getElementById("MyFirstCanvas");
     var gl = canvas.getContext("webgl");
 
@@ -126,18 +162,7 @@ function drawStuff(){
     program.position = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(program.position);
 
-    var ANGLE = 45.0;
-    var radian = Math.PI * ANGLE  / 180.0;  // convert to radians
-    var cosB = Math.cos(radian);
-    var sinB = Math.sin(radian);
-
-    var transMatrix = new Float32Array([
-        cosB, -sinB, 0.0, 0.0,
-        sinB, cosB, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-    ]);
-
+    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');
     var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');
 
     // === Tworzenie buforu z wspolrzednymi punktow figury ===
@@ -145,12 +170,12 @@ function drawStuff(){
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
 
     var vertices = new Float32Array([
-        0.2, 0.2,
-        -0.2, 0.2,
-        0.2, -0.2,
+         0.2,  0.2,
+        -0.2,  0.2,
+         0.2, -0.2,
         -0.2, -0.2,
-        -0.2, 0.2,
-        0.2, -0.2
+        -0.2,  0.2,
+         0.2, -0.2
     ]);
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -161,19 +186,27 @@ function drawStuff(){
     gl.bindBuffer(gl.ARRAY_BUFFER, pointsBuffer);
     gl.vertexAttribPointer(program.position, pointsBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.uniformMatrix4fv(tMatrix, false, newMatrix);
+    gl.uniformMatrix4fv(tMatrix, false, transMatrix);
+    gl.uniformMatrix4fv(rMatrix, false, rotMatrix);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, pointsBuffer.numItems);
 
 
     // === Funkcja animujaca figure ===
     var tick = function(){
+
+        // rotacja + translacja:
+        animateSquare();    // Update rotation and translation
+        drawSquare(gl, pointsBuffer.numItems, rMatrix, tMatrix);
+
         // rotacja:
-        currentAngle = animateAngle(currentAngle);   // Update the rotation
-        drawRotation(gl, pointsBuffer.numItems, currentAngle, tMatrix);
+        //currAngle = animateAngle(currAngle);
+        //drawRotation(gl, pointsBuffer.numItems, currAngle, rMatrix);
+
         // translacja:
         //animatePosition();
         //drawTranslation(gl, pointsBuffer.numItems, Tx, Ty, Tz, tMatrix);
+
         requestAnimationFrame(tick);    // request that the browser calls tick
     };
 
