@@ -16,16 +16,14 @@ var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'varying vec4 v_color;\n'+
     'void main(){\n' +
-    '   gl_FragColor = v_color;\n' + //kolor punktu
+    '   gl_FragColor = v_color;\n' +    // kolory punktu
     '}\n';
 
+// Rysuje rzeczy w Canvasie:
 function drawStuff() {
-
     var canvas = document.getElementById('MyFirstCanvas');
     var gl = canvas.getContext("webgl");
     console.log(gl);
-
-
     if (!gl) {
         console.log('webGl nie bangla');
         return;
@@ -53,19 +51,17 @@ function drawStuff() {
 
 
     var n = 3;
+    // tablica wspolrzednych wierzcholkow wraz z ich kolorami:
     var colouredVertices = new Float32Array
     (
-        [
-            0.0, 0.5, 1.0, 0.0, 0.0,
-            -0.5, -0.5, 0.0, 1.0, 0.0,
-            0.5, -0.5, 0.0, 0.0, 1.0
+        [   // wspol.:    // RGB:
+             0.0,  0.5,   1.0, 0.0, 0.0,
+            -0.5, -0.5,   0.0, 1.0, 0.0,
+             0.5, -0.5,   0.0, 0.0, 1.0
         ]
     );
 
-
-
-
-    var colouredVertexBuffer = gl.createBuffer();
+    var colouredVertexBuffer = gl.createBuffer();       // bufor kolorowanych punktow
     gl.bindBuffer(gl.ARRAY_BUFFER, colouredVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, colouredVertices, gl.STATIC_DRAW);
 
@@ -83,9 +79,5 @@ function drawStuff() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
-    gl.drawArrays(gl.POINTS, 0, n);
-
-
-
+    gl.drawArrays(gl.TRIANGLES, 0, n);
 }
-
