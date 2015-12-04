@@ -7,19 +7,19 @@ var VSHADER_SOURCE =
     'attribute float pointSize;\n'+
     'void main() {\n' +
     'gl_Position = position;\n' +
-    'gl_PointSize = pointSize;}\n'; +
+    'gl_PointSize = pointSize;\n' +
     '}\n';
+
 var FSHADER_SOURCE =
     'void main(){\n' +
-    ' gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n' + //kolor punktu
+    ' gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0);\n' + //kolor punktu
     '}\n';
 
+// Rysuje rzeczy w Canvasie:
 function drawStuff() {
-
     var canvas = document.getElementById('MyFirstCanvas');
     var gl = canvas.getContext("webgl");
     console.log(gl);
-
 
     if (!gl) {
         console.log('webGl nie bangla');
@@ -48,30 +48,28 @@ function drawStuff() {
 
 
     var n = 3;
+    // tablica wspolrzednych punktow:
     var vertices = new Float32Array
     (
         [
             0.0, 0.5, -0.5, -0.5, 0.5, -0.5
         ]);
 
-
+    // tablica rozmiarow punktow:
     var size = new Float32Array
     (
         [
             10.0, 20.0, 30.0
         ]);
 
-    var vertexBuffer = gl.createBuffer();
-    var sizeBuffer = gl.createBuffer();
+    var vertexBuffer = gl.createBuffer();   // bufor punktow
+    var sizeBuffer = gl.createBuffer();     // bufor rozmiarow punktow
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
     var position = gl.getAttribLocation(gl.program, 'position');
-
-
     gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(position);
-
 
     gl.bindBuffer(gl.ARRAY_BUFFER, sizeBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, size, gl.STATIC_DRAW);
@@ -79,12 +77,9 @@ function drawStuff() {
     gl.vertexAttribPointer(pointSize, 1, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(pointSize);
 
+
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
     gl.drawArrays(gl.POINTS, 0, n);
-
-
-
 }
-
