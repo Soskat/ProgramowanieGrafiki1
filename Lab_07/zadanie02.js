@@ -7,16 +7,16 @@ var VSHADER_SOURCE =
     'attribute vec4 a_color;\n'+
     'varying vec4 v_color;\n'+
     'void main() {\n' +
-    'gl_Position = position;\n' +
-    'gl_PointSize = 10.0;\n' +
-    'v_color = a_color;\n' +
+    '   gl_Position = position;\n' +
+    '   gl_PointSize = 10.0;\n' +
+    '   v_color = a_color;\n' +
     '}\n';
 
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'varying vec4 v_color;\n'+
     'void main(){\n' +
-    ' gl_FragColor = v_color;\n' +  //kolor punktu
+    '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
 
 // Rysuje rzeczy w Canvasie:
@@ -79,5 +79,5 @@ function drawStuff() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
-    gl.drawArrays(gl.POINTS, 0, 3);
+    gl.drawArrays(gl.POINTS, 0, n);
 }
