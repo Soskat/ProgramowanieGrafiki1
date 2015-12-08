@@ -6,13 +6,13 @@ var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
     'attribute float pointSize;\n'+
     'void main() {\n' +
-    'gl_Position = position;\n' +
-    'gl_PointSize = pointSize;\n' +
+    '   gl_Position = position;\n' +
+    '   gl_PointSize = pointSize;\n' +
     '}\n';
 
 var FSHADER_SOURCE =
     'void main(){\n' +
-    ' gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0);\n' + //kolor punktu
+    '   gl_FragColor = vec4(0.2, 0.7, 1.0, 1.0);\n' + //kolor punktu
     '}\n';
 
 // Rysuje rzeczy w Canvasie:
@@ -20,7 +20,6 @@ function drawStuff() {
     var canvas = document.getElementById('MyFirstCanvas');
     var gl = canvas.getContext("webgl");
     console.log(gl);
-
     if (!gl) {
         console.log('webGl nie bangla');
         return;
