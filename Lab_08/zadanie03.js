@@ -20,8 +20,10 @@ var FSHADER_SOURCE =
     '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
 
-var viewMatrix = new Float32Array(16);
 
+var viewMatrix = new Float32Array(16);  // macierz widoku
+
+// Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
 
@@ -71,19 +73,24 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
 
 
 var g_eyeX = 0.20, g_eyeY = 0.25, g_eyeZ = 0.25;
+// Obsluga klawiszy Left-Right
 function keydown(ev, gl, n, u_ViewMatrix, viewMatrix){
 
     if(ev.keyCode == 39){
         g_eyeX += 0.02;
-    } else if(ev.keyCode == 37){
+    }
+    else if(ev.keyCode == 37){
         g_eyeX -= 0.02;
-    } else { return; }
+    }
+    else{
+        return;
+    }
 
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 9);
+    gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 
 // Rysuje rzeczy w Canvasie:
@@ -122,18 +129,17 @@ function drawStuff() {
     var colouredVertices = new Float32Array
     (
         [  // wspolrz.:   // RGB:
-            0.0, 0.5, -0.4,   1.0, 0.0, 0.0,
-            -0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
-            0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
+             0.0,  0.5, -0.2,   1.0, 0.0, 0.0,
+            -0.5, -0.5, -0.2,   1.0, 0.0, 0.0,
+             0.5, -0.5, -0.2,   1.0, 0.0, 0.0,
 
-            0.5, 0.4, -0.2,   0.0, 1.0, 0.0,
-            -0.5, 0.4, -0.2,   0.0, 1.0, 0.0,
-            0.0, -0.6, -0.2,   0.0, 1.0, 0.0,
+             0.5,  0.4,  0.0,   0.0, 1.0, 0.0,
+            -0.5,  0.4,  0.0,   0.0, 1.0, 0.0,
+             0.0, -0.6,  0.0,   0.0, 1.0, 0.0,
 
-            0.0, 0.5, 0.0,   0.0, 0.0, 1.0,
-            -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,
-            0.5, -0.5, 0.0,   0.0, 0.0, 1.0
-
+             0.0,  0.5,  0.2,   0.0, 0.0, 1.0,
+            -0.5, -0.5,  0.2,   0.0, 0.0, 1.0,
+             0.5, -0.5,  0.2,   0.0, 0.0, 1.0
         ]
     );
 
@@ -143,11 +149,10 @@ function drawStuff() {
 
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
 
-    document.onkeydown = function(ev){ keydown(ev, gl, n, u_ViewMatrix, viewMatrix); };
+    document.onkeydown = function(ev){ keydown(ev, gl, n, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
 
     setLookAt(0.20, 0.25, 0.25, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
 
 
     var position = gl.getAttribLocation(gl.program, 'position');
