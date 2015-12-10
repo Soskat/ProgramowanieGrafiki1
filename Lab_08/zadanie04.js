@@ -9,7 +9,6 @@ var VSHADER_SOURCE =
     'uniform mat4 u_ViewMatrix;\n'+
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * position;\n' +
-    '   gl_PointSize = 10.0;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -20,8 +19,9 @@ var FSHADER_SOURCE =
     '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
 
-var viewMatrix = new Float32Array(16);
+var viewMatrix = new Float32Array(16);  // macierz widoku
 
+// Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
 
@@ -69,8 +69,6 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     viewMatrix[15] = 1;
 }
 
-
-
 // Rysuje rzeczy w Canvasie:
 function drawStuff() {
     var canvas = document.getElementById('MyFirstCanvas');
@@ -102,36 +100,36 @@ function drawStuff() {
     gl.program = program;
 
 
-    var n = 18;
     // macierz wspolrzednych punktow oraz ich kolorow
     var colouredVertices = new Float32Array
     (
         [  // wspolrz.:   // RGB:
-            -0.4, -0.4, 0.4,   1.0, 0.0, 0.0,
-            0.4, -0.4, 0.4,   0.0, 1.0, 0.0,
-            -0.4, -0.4, -0.4,   0.0, 0.0, 1.0,
+            -0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
+             0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
+            -0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
 
-            0.4, -0.4, 0.4,   1.0, 0.0, 0.0,
-            0.4, -0.4, -0.4,   0.0, 1.0, 0.0,
-            -0.4, -0.4, -0.4,   0.0, 0.0, 1.0,
+             0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
+            -0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
+             0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
 
-            -0.4, -0.4, 0.4,   1.0, 0.0, 0.0,
-            0.4, -0.4, 0.4,   0.0, 1.0, .0,
-            0.0, 0.4, 0.0,   0.0, 0.0, 1.0,
+            -0.4, -0.4, -0.4,   0.5, 0.9, 0.3,
+             0.0,  0.4,  0.0,   0.9, 0.9, 0.3,
+             0.4, -0.4, -0.4,   0.5, 0.9, 0.3,
 
-            -0.4, -0.4, 0.4,   1.0, 0.0, 0.0,
-            0.0, 0.4, 0.0,   0.0, 1.0, .0,
-            -0.4, -0.4, -0.4,   0.0, 0.0, 1.0,
+            -0.4, -0.4,  0.4,   0.0, 0.9, 0.6,
+             0.0,  0.4,  0.0,   0.5, 0.8, 0.9,
+            -0.4, -0.4, -0.4,   0.0, 0.9, 0.6,
 
-            -0.4, -0.4, -0.4,   1.0, 0.0, 0.0,
-            0.0, 0.4, 0.0,   0.0, 1.0, .0,
-            0.4, -0.4, -0.4,   0.0, 0.0, 1.0,
+             0.4, -0.4,  0.4,   0.5, 0.9, 0.3,
+             0.0,  0.4,  0.0,   0.9, 0.9, 0.3,
+            -0.4, -0.4,  0.4,   0.5, 0.9, 0.3,
 
-            0.4, -0.4, -0.4,   1.0, 0.0, 0.0,
-            0.0, 0.4, 0.0,   0.0, 1.0, .0,
-            0.4, -0.4, 0.4,   0.0, 0.0, 1.0
+             0.4, -0.4, -0.4,   0.0, 0.9, 0.6,
+             0.0,  0.4,  0.0,   0.5, 0.8, 0.9,
+             0.4, -0.4,  0.4,   0.0, 0.9, 0.6
         ]
     );
+    var n = colouredVertices.length / 6;
 
     var colouredVertexBuffer = gl.createBuffer();       // bufor kolorowanych wierzcholkow
     gl.bindBuffer(gl.ARRAY_BUFFER, colouredVertexBuffer);
