@@ -9,7 +9,6 @@ var VSHADER_SOURCE =
     'uniform mat4 u_ViewMatrix;\n'+
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * position;\n' +
-    '   gl_PointSize = 10.0;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -20,8 +19,10 @@ var FSHADER_SOURCE =
     '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
 
-var viewMatrix = new Float32Array(16);
 
+var viewMatrix = new Float32Array(16);  // macierz widoku
+
+// Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
 
@@ -107,18 +108,17 @@ function drawStuff() {
     var colouredVertices = new Float32Array
     (
         [  // wspolrz.:   // RGB:
-            0.0, 0.5, -0.4,   1.0, 0.0, 0.0,
+             0.0,  0.5, -0.4,   1.0, 0.0, 0.0,
             -0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
-            0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
+             0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
 
-            0.5, 0.4, -0.2,   0.0, 1.0, 0.0,
-            -0.5, 0.4, -0.2,   0.0, 1.0, 0.0,
-            0.0, -0.6, -0.2,   0.0, 1.0, 0.0,
+             0.5,  0.4, -0.2,   0.0, 1.0, 0.0,
+            -0.5,  0.4, -0.2,   0.0, 1.0, 0.0,
+             0.0, -0.6, -0.2,   0.0, 1.0, 0.0,
 
-            0.0, 0.5, 0.0,   0.0, 0.0, 1.0,
+             0.0,  0.5, 0.0,   0.0, 0.0, 1.0,
             -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,
-            0.5, -0.5, 0.0,   0.0, 0.0, 1.0
-
+             0.5, -0.5, 0.0,   0.0, 0.0, 1.0
         ]
     );
 
@@ -128,7 +128,7 @@ function drawStuff() {
 
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
     setLookAt(0.20, 0.25, 0.25, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);   // aplikujemy transformacje macierzy widoku
 
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
