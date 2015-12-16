@@ -1,13 +1,15 @@
 /**
- * Created by nocah on 10.12.2015.
+ * Created by nocah on 16.12.2015.
  */
 
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
     'attribute vec4 a_color;\n'+
     'varying vec4 v_color;\n'+
+    'uniform mat4 u_ViewMatrix;\n'+
+    'uniform mat4 rmatrix;\n'+
     'void main() {\n' +
-    '   gl_Position = position;\n' +
+    '   gl_Position = rmatrix * u_ViewMatrix * position ;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -19,20 +21,60 @@ var FSHADER_SOURCE =
     '}\n';
 
 
+var viewMatrix = new Float32Array(16);  // macierz widoku
+
+// Ustawia macierz widoku
+function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
+    var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
+
+    fx = centerX - eyeX;
+    fy = centerY - eyeY;
+    fz = centerZ - eyeZ;
+
+    rlf = 1 / Math.sqrt(fx*fx + fy*fy + fz*fz);
+    fx *= rlf;
+    fy *= rlf;
+    fz *= rlf;
+
+    sx = fy * upZ - fz * upY;
+    sy = fz * upX - fx * upZ;
+    sz = fx * upY - fy * upX;
 
 
+    rls = 1 / Math.sqrt(sx*sx + sy*sy + sz*sz);
+    sx *= rls;
+    sy *= rls;
+    sz *= rls;
 
-// wspolrzedne wierzcholkow ruchomego trojkata:
-var X1 = 0.0, Y1 = 0.5, Z1 = 0.0;
-var X2 = -0.5, Y2 = -0.5, Z2 = 0.0;
-var X3 = 0.5, Y3 = -0.5, Z3 = 0.0;
-// inne zmienne globalne:
-var g_last = Date.now();
-var currentAngle = 0.0;
+    ux = sy * fz - sz * fy;
+    uy = sz * fx - sx * fz;
+    uz = sx * fy - sy * fx;
+
+    viewMatrix[0] = sx;
+    viewMatrix[1] = ux;
+    viewMatrix[2] = -fx;
+    viewMatrix[4] = 0;
+
+    viewMatrix[4] = sy;
+    viewMatrix[5] = uy;
+    viewMatrix[6] = -fy;
+    viewMatrix[7] = 0;
+
+    viewMatrix[8] = sz;
+    viewMatrix[9] = uz;
+    viewMatrix[10] = -fz;
+    viewMatrix[11] = 0;
+
+    viewMatrix[12] = 0;
+    viewMatrix[13] = 0;
+    viewMatrix[14] = 0;
+    viewMatrix[15] = 1;
+}
+
+
 var rotMatrix = new Float32Array(16);   // macierz rotacji wokol osi Y
+var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 
-
-// aktualizuje macierz rotacji:
 function setNewRotateMatrix(angle){
     var radian = Math.PI * angle / 180.0;   // degr to radians
     var cosB = Math.cos(radian);
@@ -40,33 +82,17 @@ function setNewRotateMatrix(angle){
 
     // Elementy macierzy numerowane sa kolumnami!
     rotMatrix[0] = cosB;
-    rotMatrix[1] = sinB;
-    rotMatrix[4] = -sinB;
-    rotMatrix[5] = cosB;
-    rotMatrix[10] = 1.0;
+    rotMatrix[2] = -sinB;
+    rotMatrix[5] = 1.0;
+    rotMatrix[8] = sinB;
+    rotMatrix[10] = cosB;
     rotMatrix[15] = 1.0;
 }
 
-// rotacja punktów ruchomego trojkata przez macierz rotacji:
-function multiplayMatrixPerVectorPoints(){
-    // pierwszy punkt:
-    X1 = rotMatrix[0]*X1 + rotMatrix[4]*Y1 + rotMatrix[8]*Z1;
-    Y1 = rotMatrix[1]*X1 + rotMatrix[5]*Y1 + rotMatrix[9]*Z1;
-    Z1 = rotMatrix[2]*X1 + rotMatrix[6]*Y1 + rotMatrix[10]*Z1;
-
-    // drugi punkt:
-    X2 = rotMatrix[0]*X2 + rotMatrix[4]*Y2 + rotMatrix[8]*Z2;
-    Y2 = rotMatrix[1]*X2 + rotMatrix[5]*Y2 + rotMatrix[9]*Z2;
-    Z2 = rotMatrix[2]*X2 + rotMatrix[6]*Y2 + rotMatrix[10]*Z2;
-
-    // trzeci punkt:
-    X3 = rotMatrix[0]*X3 + rotMatrix[4]*Y3 + rotMatrix[8]*Z3;
-    Y3 = rotMatrix[1]*X3 + rotMatrix[5]*Y3 + rotMatrix[9]*Z3;
-    Z3 = rotMatrix[2]*X3 + rotMatrix[6]*Y3 + rotMatrix[10]*Z3;
-}
-
+var g_last = Date.now();
+var currentAngle = 0.0;
 // Animowanie rotacji piramidy wokol osi Y
-function animate(gl, n){
+function animate(gl, rMatrix){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
@@ -74,28 +100,19 @@ function animate(gl, n){
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
 
     setNewRotateMatrix(currentAngle);
-    multiplayMatrixPerVectorPoints();
-
-    //gl.uniformMatrix4fv(rMatrix, false, rotMatrix);
 
 
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, n);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.uniformMatrix4fv(rMatrix, false, rotMatrix);
+    gl.drawArrays(gl.TRIANGLES, 3, 3);
+
+    gl.uniformMatrix4fv(rMatrix, false, identity);
+    gl.drawArrays(gl.TRIANGLES, 6, 3);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // Rysuje rzeczy w Canvasie:
@@ -128,13 +145,12 @@ function drawStuff() {
     gl.useProgram(program);
     gl.program = program;
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
+    var n = 9;
     // macierz wspolrzednych punktow oraz ich kolorow
-    var stillVertices = new Float32Array
+    var colouredVertices = new Float32Array
     (
-        [    // wspolrz.:       // RGB:
+        [  // wspolrz.:   // RGB:
             0.0,  0.5, -0.4,   1.0, 0.0, 0.0,
             -0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
             0.5, -0.5, -0.4,   1.0, 0.0, 0.0,
@@ -143,21 +159,27 @@ function drawStuff() {
             -0.5,  0.4, -0.2,   0.0, 1.0, 0.0,
             0.0, -0.6, -0.2,   0.0, 1.0, 0.0,
 
-            X1,  Y1,  Z1,   0.0, 0.0, 1.0,
-            X2,  Y2,  Z2,   0.0, 0.0, 1.0,
-            X3,  Y3,  Z3,   0.0, 0.0, 1.0
+            0.0,  0.5, 0.0,   0.0, 0.0, 1.0,
+            -0.5, -0.5, 0.0,   0.0, 0.0, 1.0,
+            0.5, -0.5, 0.0,   0.0, 0.0, 1.0
         ]
     );
-    var n = stillVertices.length / 6;
 
     var colouredVertexBuffer = gl.createBuffer();       // bufor kolorowanych wierzcholkow
     gl.bindBuffer(gl.ARRAY_BUFFER, colouredVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, stillVertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, colouredVertices, gl.STATIC_DRAW);
+
+    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    setLookAt(0.20, 0.25, 0.25, 0, 0, 0, 0, 1, 0);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);   // aplikujemy transformacje macierzy widoku
 
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
 
-    var FSIZE = stillVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu
+    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');
+    gl.uniformMatrix4fv(rMatrix, false, identity);
+
+    var FSIZE = colouredVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu
 
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 6, 0);
     gl.enableVertexAttribArray(position);
@@ -165,11 +187,14 @@ function drawStuff() {
     gl.vertexAttribPointer(color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
     gl.enableVertexAttribArray(color);
 
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
     gl.drawArrays(gl.TRIANGLES, 0, n);
 
 
     var tick = function(){
-        animate(gl, n);   // uruchamiamy animacje piramidy
+        animate(gl, rMatrix);   // uruchamiamy animacje piramidy
         requestAnimationFrame(tick);                // request that the browser calls tick
     };
 
