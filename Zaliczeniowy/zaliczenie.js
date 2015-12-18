@@ -70,6 +70,38 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     viewMatrix[15] = 1;
 }
 
+
+var g_eyeX = 0.20, g_eyeY = 0.25, g_eyeZ = 0.25;
+// Obsluga klawiszy strzalek:
+function keydown(ev, gl, n, u_ViewMatrix){
+    if(ev.keyCode == 38){
+        g_eyeY += 0.02;
+    }
+    else if(ev.keyCode == 40){
+        g_eyeY -= 0.02;
+    }
+    else if(ev.keyCode == 39){
+        g_eyeX += 0.02;
+    }
+    else if(ev.keyCode == 37){
+        g_eyeX -= 0.02;
+    }
+    else{
+        return;
+    }
+    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, n);
+}
+
+
+
+
+
+
+
+
 // Rysuje rzeczy w Canvasie:
 function drawStuff() {
     var canvas = document.getElementById('MyFirstCanvas');
@@ -113,8 +145,8 @@ function drawStuff() {
         [  // wspolrz.:   // RGB:
             -0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
             -0.5, -0.5,  0.5,  0.5, 0.5, 0.5,
-             0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
-             0.5, -0.5,  0.5,  0.5, 0.5, 0.5
+            0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
+            0.5, -0.5,  0.5,  0.5, 0.5, 0.5
         ]
     );
     var floorN = floorVertices.length / 6;
@@ -124,14 +156,14 @@ function drawStuff() {
     (
         [  // wspolrz.:   // RGB:
             -0.2, -0.2,  0.2,   0.1, 0.8, 0.2,
-             0.2, -0.2,  0.2,   0.1, 0.8, 0.2,
+            0.2, -0.2,  0.2,   0.1, 0.8, 0.2,
             -0.2, -0.2, -0.2,   0.1, 0.8, 0.2,
-             0.2, -0.2, -0.2,   0.1, 0.8, 0.2,
+            0.2, -0.2, -0.2,   0.1, 0.8, 0.2,
 
             -0.2, -0.2, -0.2,   0.4, 0.3, 0.2,
-             0.2, -0.2, -0.2,   0.4, 0.3, 0.2,
+            0.2, -0.2, -0.2,   0.4, 0.3, 0.2,
             -0.2,  0.2, -0.2,   0.4, 0.3, 0.2,
-             0.2,  0.2, -0.2,   0.4, 0.3, 0.2,
+            0.2,  0.2, -0.2,   0.4, 0.3, 0.2,
 
             -0.2, -0.2,  0.2,   0.3, 0.5, 0.2,
             -0.2, -0.2, -0.2,   0.3, 0.5, 0.2,
@@ -139,17 +171,17 @@ function drawStuff() {
             -0.2,  0.2, -0.2,   0.3, 0.5, 0.2,
 
             -0.2, -0.2,  0.2,   0.4, 0.3, 0.2,
-             0.2, -0.2,  0.2,   0.4, 0.3, 0.2,
+            0.2, -0.2,  0.2,   0.4, 0.3, 0.2,
             -0.2,  0.2,  0.2,   0.4, 0.3, 0.2,
-             0.2,  0.2,  0.2,   0.4, 0.3, 0.2,
+            0.2,  0.2,  0.2,   0.4, 0.3, 0.2,
 
-             0.2, -0.2,  0.2,   0.3, 0.5, 0.2,
-             0.2,  0.2,  0.2,   0.3, 0.5, 0.2,
-             0.2, -0.2, -0.2,   0.3, 0.5, 0.2,
-             0.2,  0.2, -0.2,   0.3, 0.5, 0.2,
+            0.2, -0.2,  0.2,   0.3, 0.5, 0.2,
+            0.2,  0.2,  0.2,   0.3, 0.5, 0.2,
+            0.2, -0.2, -0.2,   0.3, 0.5, 0.2,
+            0.2,  0.2, -0.2,   0.3, 0.5, 0.2,
 
-             0.2,  0.2,  0.2,   0.1, 0.8, 0.2,
-             0.2,  0.2, -0.2,   0.1, 0.8, 0.2,
+            0.2,  0.2,  0.2,   0.1, 0.8, 0.2,
+            0.2,  0.2, -0.2,   0.1, 0.8, 0.2,
             -0.2,  0.2,  0.2,   0.1, 0.8, 0.2,
             -0.2,  0.2, -0.2,   0.1, 0.8, 0.2
         ]
@@ -163,6 +195,7 @@ function drawStuff() {
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    document.onkeydown = function(ev){ keydown(ev, gl, piramidN, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
     setLookAt(0.20, -0.25, 0.25, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
