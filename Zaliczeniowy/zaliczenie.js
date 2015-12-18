@@ -101,48 +101,70 @@ function drawStuff() {
     gl.program = program;
 
 
+    // czyszczenie bufora:
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
     // macierz wspolrzednych punktow oraz kolorow wierzcholkow podloza
     var floorVertices = new Float32Array
     (
         [  // wspolrz.:   // RGB:
-            -0.6, -0.6, -0.6,  0.5, 0.5, 0.5,
-            -0.6, -0.6,  0.6,  0.5, 0.5, 0.5,
-             0.6, -0.6,  0.6,  0.5, 0.5, 0.5,
-             0.6, -0.6, -0.6,  0.5, 0.5, 0.5
+            -0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
+            -0.5, -0.5,  0.5,  0.5, 0.5, 0.5,
+             0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
+             0.5, -0.5,  0.5,  0.5, 0.5, 0.5
         ]
     );
     var floorN = floorVertices.length / 6;
 
     // macierz wspolrzednych punktow oraz kolorow wierzcholkow piramidy
-    var piramidVertices = new Float32Array
+    var cubeVertices = new Float32Array
     (
         [  // wspolrz.:   // RGB:
-            -0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
-            0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
-            -0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
+            -0.2, -0.2,  0.2,   0.1, 0.8, 0.2,
+             0.2, -0.2,  0.2,   0.1, 0.8, 0.2,
+            -0.2, -0.2, -0.2,   0.1, 0.8, 0.2,
+             0.2, -0.2, -0.2,   0.1, 0.8, 0.2,
 
-            0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
-            -0.4, -0.4, -0.4,   0.1, 0.8, 0.2,
-            0.4, -0.4,  0.4,   0.1, 0.8, 0.2,
+            -0.2, -0.2, -0.2,   0.4, 0.3, 0.2,
+             0.2, -0.2, -0.2,   0.4, 0.3, 0.2,
+            -0.2,  0.2, -0.2,   0.4, 0.3, 0.2,
+             0.2,  0.2, -0.2,   0.4, 0.3, 0.2,
 
-            -0.4, -0.4, -0.4,   0.5, 0.9, 0.3,
-            0.0,  0.4,  0.0,   0.9, 0.9, 0.3,
-            0.4, -0.4, -0.4,   0.5, 0.9, 0.3,
+            -0.2, -0.2,  0.2,   0.3, 0.5, 0.2,
+            -0.2, -0.2, -0.2,   0.3, 0.5, 0.2,
+            -0.2,  0.2,  0.2,   0.3, 0.5, 0.2,
+            -0.2,  0.2, -0.2,   0.3, 0.5, 0.2,
 
-            -0.4, -0.4,  0.4,   0.0, 0.9, 0.6,
-            0.0,  0.4,  0.0,   0.5, 0.8, 0.9,
-            -0.4, -0.4, -0.4,   0.0, 0.9, 0.6,
+            -0.2, -0.2,  0.2,   0.4, 0.3, 0.2,
+             0.2, -0.2,  0.2,   0.4, 0.3, 0.2,
+            -0.2,  0.2,  0.2,   0.4, 0.3, 0.2,
+             0.2,  0.2,  0.2,   0.4, 0.3, 0.2,
 
-            0.4, -0.4,  0.4,   0.5, 0.9, 0.3,
-            0.0,  0.4,  0.0,   0.9, 0.9, 0.3,
-            -0.4, -0.4,  0.4,   0.5, 0.9, 0.3,
+             0.2, -0.2,  0.2,   0.3, 0.5, 0.2,
+             0.2,  0.2,  0.2,   0.3, 0.5, 0.2,
+             0.2, -0.2, -0.2,   0.3, 0.5, 0.2,
+             0.2,  0.2, -0.2,   0.3, 0.5, 0.2,
 
-            0.4, -0.4, -0.4,   0.0, 0.9, 0.6,
-            0.0,  0.4,  0.0,   0.5, 0.8, 0.9,
-            0.4, -0.4,  0.4,   0.0, 0.9, 0.6
+             0.2,  0.2,  0.2,   0.1, 0.8, 0.2,
+             0.2,  0.2, -0.2,   0.1, 0.8, 0.2,
+            -0.2,  0.2,  0.2,   0.1, 0.8, 0.2,
+            -0.2,  0.2, -0.2,   0.1, 0.8, 0.2
         ]
     );
-    var piramidN = piramidVertices.length / 6;
+    var piramidN = cubeVertices.length / 6;
+
+
+    var FSIZE = floorVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
+
+    // wyciaganie danych z shadera:
+    var position = gl.getAttribLocation(gl.program, 'position');
+    var color = gl.getAttribLocation(gl.program, 'a_color');
+    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    setLookAt(0.20, -0.25, 0.25, 0, 0, 0, 0, 1, 0);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
 
     // rysowanie podloza:
@@ -150,27 +172,10 @@ function drawStuff() {
     gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, floorVertices, gl.STATIC_DRAW);
 
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
-    setLookAt(0.20, -0.25, 0.25, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
-    var position = gl.getAttribLocation(gl.program, 'position');
-    var color = gl.getAttribLocation(gl.program, 'a_color');
-
-    var FSIZE = piramidVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu
-
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 6, 0);
     gl.enableVertexAttribArray(position);
-
     gl.vertexAttribPointer(color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
     gl.enableVertexAttribArray(color);
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.clearDepth(1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, floorN);
 
@@ -178,7 +183,12 @@ function drawStuff() {
     // rysowanie piramidy:
     var piramidVertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, piramidVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, piramidVertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, cubeVertices, gl.STATIC_DRAW);
 
-    gl.drawArrays(gl.TRIANGLES, 0, piramidN);
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 6, 0);
+    gl.enableVertexAttribArray(position);
+    gl.vertexAttribPointer(color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
+    gl.enableVertexAttribArray(color);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, piramidN);
 }
