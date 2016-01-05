@@ -11,8 +11,9 @@ var VSHADER_SOURCE =
     'varying vec4 v_color;\n'+
     'uniform mat4 u_ViewMatrix;\n'+
     'uniform mat4 rmatrix;\n'+
+    'uniform mat4 tmatrix;\n'+
     'void main() {\n' +
-    '   gl_Position = rmatrix * u_ViewMatrix * position;\n' +
+    '   gl_Position = rmatrix * tmatrix *u_ViewMatrix * position;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -122,17 +123,31 @@ function setNewCubeRotateMatrix(angle){
 }
 
 
+var vx = 0.0, vy = 0.0, vz = 0.0;
+var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+
+// Aktualizuje macierz translacji
+function setNewSphereTranslationMatrix(angle, r){
+    var radian = Math.PI * angle / 180.0;   // degr to radians
+    var cosB = Math.cos(radian);
+    var sinB = Math.sin(radian);
+
+    transMatrix[12] = r * cosB;
+    transMatrix[14] = r * sinB;
+}
+
 var g_last = Date.now();
 var currentAngle = 0.0;
 
 // Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN){
+function animate(gl, u_ViewMatrix, rMatrix, tMatrix, floorN, cubeN, sphereN){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
     g_last = now;
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
-    setNewCubeRotateMatrix(currentAngle);   // rotacja szescianu
+    setNewCubeRotateMatrix(currentAngle);           // rotacja szescianu
+    setNewSphereTranslationMatrix(currentAngle, 0.5);    // przesuniecie sfery
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -142,6 +157,7 @@ function animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN){
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
     // ustawiam wyjsciowa rotacje i rysuje podloze:
+    gl.uniformMatrix4fv(tMatrix, false, identity);
     gl.uniformMatrix4fv(rMatrix, false, identity);
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
@@ -150,6 +166,7 @@ function animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN){
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     // ustawiam wyjsciowa rotacje i rysuje sfere:
+    gl.uniformMatrix4fv(tMatrix, false, transMatrix);
     gl.uniformMatrix4fv(rMatrix, false, identity);
     gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 }
@@ -271,13 +288,16 @@ function drawStuff() {
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
 
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');               // macierz perspektywy
     document.onkeydown = function(ev){ keydown(ev, gl, N, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
-    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');
+    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');     // macierz rotacji
     gl.uniformMatrix4fv(rMatrix, false, identity);
+
+    var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');     // macierz translacji
+    gl.uniformMatrix4fv(tMatrix, false, identity);
 
     // tworzenie bufora punktow:
     var floorVertexBuffer = gl.createBuffer();
@@ -295,8 +315,8 @@ function drawStuff() {
 
 
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN);     // uruchamia animacje elementow sceny
-        requestAnimationFrame(tick);                                    // request that the browser calls tick
+        animate(gl, u_ViewMatrix, rMatrix, tMatrix, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
+        requestAnimationFrame(tick);                                            // request that the browser calls tick
     };
 
     tick();
