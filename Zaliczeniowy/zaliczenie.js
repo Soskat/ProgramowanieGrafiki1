@@ -75,7 +75,7 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
 }
 
 
-var g_eyeX = 0.20, g_eyeY = 0.25, g_eyeZ = 0.25;
+var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
 
 // Obsluga klawiszy strzalek:
 function keydown(ev, gl, n, u_ViewMatrix){
@@ -126,17 +126,20 @@ var g_last = Date.now();
 var currentAngle = 0.0;
 
 // Animowanie elementow sceny
-function animate(gl, rMatrix, floorN, cubeN){
+function animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
     g_last = now;
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
-
     setNewCubeRotateMatrix(currentAngle);   // rotacja szescianu
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+    // aktualizacja perspektywy:
+    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
     // ustawiam wyjsciowa rotacje i rysuje podloze:
     gl.uniformMatrix4fv(rMatrix, false, identity);
@@ -145,6 +148,10 @@ function animate(gl, rMatrix, floorN, cubeN){
     // ustawiam rotacje dla szescianu i go rysuje:
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
+
+    // ustawiam wyjsciowa rotacje i rysuje sfere:
+    gl.uniformMatrix4fv(rMatrix, false, identity);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 }
 
 
@@ -244,11 +251,17 @@ function drawStuff() {
             -0.1,  0.1,  0.1,   0.1, 0.8, 0.2,
             -0.1,  0.1,  0.1,   0.1, 0.8, 0.2,
              0.1,  0.1, -0.1,   0.1, 0.8, 0.2,
-            -0.1,  0.1, -0.1,   0.1, 0.8, 0.2
+            -0.1,  0.1, -0.1,   0.1, 0.8, 0.2,
+
+
+            // sfera:
+             0.5, -0.05,  0.2,   0.9, 0.8, 0.7,
+             0.5,  0.2,   0.0,   0.9, 0.8, 0.7,
+             0.5, -0.05, -0.2,   0.9, 0.8, 0.7
         ]
     );
     var N = coloredVertices.length / 6;
-
+    var floorN = 6, cubeN = 36, sphereN = 3;
 
 
 
@@ -260,7 +273,7 @@ function drawStuff() {
 
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
     document.onkeydown = function(ev){ keydown(ev, gl, N, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
-    setLookAt(0.20, -0.25, 0.25, 0, 0, 0, 0, 1, 0);
+    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
     var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');
@@ -282,8 +295,8 @@ function drawStuff() {
 
 
     var tick = function(){
-        animate(gl, rMatrix, 6, N-6);           // uruchamia animacje elementow sceny
-        requestAnimationFrame(tick);    // request that the browser calls tick
+        animate(gl, u_ViewMatrix, rMatrix, floorN, cubeN, sphereN);     // uruchamia animacje elementow sceny
+        requestAnimationFrame(tick);                                    // request that the browser calls tick
     };
 
     tick();
