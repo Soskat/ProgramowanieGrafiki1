@@ -3,13 +3,16 @@
  */
 
 
+// == Programy shaderow ===========================================================================
+
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
     'attribute vec4 a_color;\n'+
     'varying vec4 v_color;\n'+
     'uniform mat4 u_ViewMatrix;\n'+
+    'uniform mat4 rmatrix;\n'+
     'void main() {\n' +
-    '   gl_Position = u_ViewMatrix * position;\n' +
+    '   gl_Position = rmatrix * u_ViewMatrix * position;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -19,6 +22,8 @@ var FSHADER_SOURCE =
     'void main(){\n' +
     '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
+
+// == Funkcje pomocnicze ==========================================================================
 
 var viewMatrix = new Float32Array(16);  // macierz widoku
 
@@ -38,7 +43,6 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     sx = fy * upZ - fz * upY;
     sy = fz * upX - fx * upZ;
     sz = fx * upY - fy * upX;
-
 
     rls = 1 / Math.sqrt(sx*sx + sy*sy + sz*sz);
     sx *= rls;
@@ -72,6 +76,7 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
 
 
 var g_eyeX = 0.20, g_eyeY = 0.25, g_eyeZ = 0.25;
+
 // Obsluga klawiszy strzalek:
 function keydown(ev, gl, n, u_ViewMatrix){
     if(ev.keyCode == 38){
@@ -92,18 +97,61 @@ function keydown(ev, gl, n, u_ViewMatrix){
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    // rysuje podloze:
+
+    // rysuje elementy sceny:
     gl.drawArrays(gl.TRIANGLES, 0, n);
-    // rysuje szescian:
-    gl.drawArrays(gl.TRIANGLES, 6, n);
+}
+
+
+
+var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu wokol osi Y
+var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+
+// Aktualizuje macierz rotacji
+function setNewCubeRotateMatrix(angle){
+    var radian = Math.PI * angle / 180.0;   // degr to radians
+    var cosB = Math.cos(radian);
+    var sinB = Math.sin(radian);
+
+    rotMatrixCube[0] = cosB;
+    rotMatrixCube[2] = -sinB;
+    rotMatrixCube[5] = 1.0;
+    rotMatrixCube[8] = sinB;
+    rotMatrixCube[10] = cosB;
+    rotMatrixCube[15] = 1.0;
+}
+
+
+var g_last = Date.now();
+var currentAngle = 0.0;
+
+// Animowanie elementow sceny
+function animate(gl, rMatrix, floorN, cubeN){
+    var ANGLE_STEP = 45.0;
+    var now = Date.now();
+    var elapsed = now - g_last; // milisec
+    g_last = now;
+    currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
+
+    setNewCubeRotateMatrix(currentAngle);   // rotacja szescianu
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+
+    // ustawiam wyjsciowa rotacje i rysuje podloze:
+    gl.uniformMatrix4fv(rMatrix, false, identity);
+    gl.drawArrays(gl.TRIANGLES, 0, floorN);
+
+    // ustawiam rotacje dla szescianu i go rysuje:
+    gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
+    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 }
 
 
 
 
 
-
-
+// == Program glowny ==============================================================================
 
 // Rysuje rzeczy w Canvasie:
 function drawStuff() {
@@ -209,12 +257,16 @@ function drawStuff() {
     // wyciaganie danych z shadera:
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
+
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
     document.onkeydown = function(ev){ keydown(ev, gl, N, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
     setLookAt(0.20, -0.25, 0.25, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
+    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');
+    gl.uniformMatrix4fv(rMatrix, false, identity);
 
+    // tworzenie bufora punktow:
     var floorVertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, coloredVertices, gl.STATIC_DRAW);
@@ -224,8 +276,15 @@ function drawStuff() {
     gl.vertexAttribPointer(color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
     gl.enableVertexAttribArray(color);
 
-    // rysuje podloze:
+    // rysowanie elementow sceny:
     gl.drawArrays(gl.TRIANGLES, 0, N);
-    // rysuje szescian:
-    gl.drawArrays(gl.TRIANGLES, 6, N);
+
+
+
+    var tick = function(){
+        animate(gl, rMatrix, 6, N-6);           // uruchamia animacje elementow sceny
+        requestAnimationFrame(tick);    // request that the browser calls tick
+    };
+
+    tick();
 }
