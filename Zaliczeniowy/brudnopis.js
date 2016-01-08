@@ -13,7 +13,7 @@ var VSHADER_SOURCE =
     'uniform mat4 rmatrix;\n'+
     'uniform mat4 tmatrix;\n'+
     'void main() {\n' +
-    '   gl_Position = u_ViewMatrix * rmatrix * tmatrix * position;\n' +
+    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -105,21 +105,40 @@ function keydown(ev, gl, n, u_ViewMatrix){
 
 
 
-var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu wokol osi Y
+var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu
+var rotMatrixSphere = new Float32Array(16); // macierz rotacji sfery
 var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 
 // Aktualizuje macierz rotacji
-function setNewCubeRotateMatrix(angle){
+function setNewRotateMatrix(rotMatrix, angle, axis){
     var radian = Math.PI * angle / 180.0;   // degr to radians
     var cosB = Math.cos(radian);
     var sinB = Math.sin(radian);
 
-    rotMatrixCube[0] = cosB;
-    rotMatrixCube[2] = -sinB;
-    rotMatrixCube[5] = 1.0;
-    rotMatrixCube[8] = sinB;
-    rotMatrixCube[10] = cosB;
-    rotMatrixCube[15] = 1.0;
+    if(axis == 'X'){
+        rotMatrix[0] = 1.0;
+        rotMatrix[5] = cosB;
+        rotMatrix[6] = sinB;
+        rotMatrix[9] = -sinB;
+        rotMatrix[10] = cosB;
+        rotMatrix[15] = 1.0;
+    }
+    else if(axis == 'Y'){
+        rotMatrix[0] = cosB;
+        rotMatrix[2] = -sinB;
+        rotMatrix[5] = 1.0;
+        rotMatrix[8] = sinB;
+        rotMatrix[10] = cosB;
+        rotMatrix[15] = 1.0;
+    }
+    else if(axis == 'Z'){
+        rotMatrix[0] = cosB;
+        rotMatrix[1] = sinB;
+        rotMatrix[4] = -sinB;
+        rotMatrix[5] = cosB;
+        rotMatrix[10] = 1.0;
+        rotMatrix[15] = 1.0;
+    }
 }
 
 
@@ -145,8 +164,10 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     var elapsed = now - g_last; // milisec
     g_last = now;
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
-    setNewCubeRotateMatrix(currentAngle);           // rotacja szescianu
-    setNewSphereTranslationMatrix(currentAngle, r);    // przesuniecie sfery
+
+    setNewSphereTranslationMatrix(currentAngle, r);             // przesuniecie sfery
+    setNewRotateMatrix(rotMatrixSphere, currentAngle, 'X');     // rotacja sfery
+    setNewRotateMatrix(rotMatrixCube, currentAngle, 'Y');       // rotacja szescianu
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -166,8 +187,7 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
 
     // ustawiam wyjsciowa rotacje i rysuje sfere:
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-    setNewCubeRotateMatrix(-currentAngle);           // rotacja szescianu
-    gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
+    gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
     //gl.uniformMatrix4fv(rMatrix, false, identity);
     gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 }
