@@ -123,7 +123,6 @@ function setNewCubeRotateMatrix(angle){
 }
 
 
-var vx = 0.0, vy = 0.0, vz = 0.0;
 var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 
 // Aktualizuje macierz translacji
@@ -132,22 +131,22 @@ function setNewSphereTranslationMatrix(angle, r){
     var cosB = Math.cos(radian);
     var sinB = Math.sin(radian);
 
-    transMatrix[12] = r * cosB;
-    transMatrix[14] = r * sinB;
+    transMatrix[12] = r * sinB;     // vx
+    transMatrix[13] = r * cosB;     // vy
 }
 
 var g_last = Date.now();
 var currentAngle = 0.0;
 
 // Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, tMatrix, floorN, cubeN, sphereN){
+function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
     g_last = now;
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
     setNewCubeRotateMatrix(currentAngle);           // rotacja szescianu
-    setNewSphereTranslationMatrix(currentAngle, 0.5);    // przesuniecie sfery
+    setNewSphereTranslationMatrix(currentAngle, r);    // przesuniecie sfery
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
@@ -272,9 +271,9 @@ function drawStuff() {
 
 
             // sfera:
-             0.5, -0.05,  0.2,   0.9, 0.8, 0.7,
-             0.5,  0.2,   0.0,   0.9, 0.8, 0.7,
-             0.5, -0.05, -0.2,   0.9, 0.8, 0.7
+             0.0, -0.05,  0.2,   0.9, 0.8, 0.7,
+             0.0,  0.2,   0.0,   0.9, 0.8, 0.7,
+             0.0, -0.05, -0.2,   0.9, 0.8, 0.7
         ]
     );
     var N = coloredVertices.length / 6;
@@ -315,7 +314,7 @@ function drawStuff() {
 
 
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, tMatrix, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
+        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
         requestAnimationFrame(tick);                                            // request that the browser calls tick
     };
 
