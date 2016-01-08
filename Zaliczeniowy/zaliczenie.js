@@ -19,10 +19,14 @@ var VSHADER_SOURCE =
 
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
-    'uniform sampler2D uSampler;\n' +
+    'uniform sampler2D uSampler1;\n' +
+    'uniform sampler2D uSampler2;\n' +
+    'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'void main(){\n' +
-    '   gl_FragColor = texture2D(uSampler, vTexCoord);\n' + //tekstura
+    '   gl_FragColor = texture2D(uSampler1, vTexCoord);\n' + //tekstura 1.
+    '   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
+    '   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '}\n';
 
 // == Funkcje pomocnicze ==========================================================================
@@ -193,6 +197,21 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
 }
 
 
+// Wczytywanie tekstury:
+function loadTextureSettings(gl, u_Sampler, texture, img, first_el, N){
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl. RGB, gl.UNSIGNED_BYTE, img);
+    gl.uniform1i(u_Sampler, 0);
+
+    gl.clearColor(0,0,0,1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, first_el, N);
+}
 
 
 
@@ -375,34 +394,29 @@ function drawStuff() {
     gl.enableVertexAttribArray(a_TextCoord);
 
 
-    // tworzymy teksture:
-    var texture = gl.createTexture();
-    var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
-    var img = new Image();
-    img.src = "differentWalls.jpg";
-    img.onload = function(){
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+    // tworzenie tekstur (i rysowanie elementow sceny):
+    var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler1');
+    var floorTexture = gl.createTexture();
+    var floorImg = new Image();
+    floorImg.src = "basketStyle.jpg";
+    floorImg.onload = function(){ loadTextureSettings(gl, floor_u_Sampler, floorTexture, floorImg, 0, floorN); };
 
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl. RGB, gl.UNSIGNED_BYTE, img);
-        gl.uniform1i(u_Sampler, 0);
-    };
+    var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler2');
+    var cubeTexture = gl.createTexture();
+    var cubeImg = new Image();
+    cubeImg.src = "differentWalls.jpg";
+    cubeImg.onload = function(){ loadTextureSettings(gl, cube_u_Sampler, cubeTexture, cubeImg, floorN, cubeN); };
 
-
-
-
-
-    // rysowanie elementow sceny:
-    gl.drawArrays(gl.TRIANGLES, 0, N);
+    var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler3');
+    var sphereTexture = gl.createTexture();
+    var sphereImg = new Image();
+    sphereImg.src = "cracked.jpg";
+    sphereImg.onload = function(){ loadTextureSettings(gl, sphere_u_Sampler, sphereTexture, sphereImg, floorN + cubeN, sphereN); };
 
 
     // animowanie sceny:
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
+        //animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
         requestAnimationFrame(tick);                                            // request that the browser calls tick
     };
 
