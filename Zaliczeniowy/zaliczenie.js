@@ -1,5 +1,5 @@
 /**
- * Created by nocah on 16.12.2015.
+ * Created by nocah on 08.01.2016.
  */
 
 
@@ -25,8 +25,8 @@ var FSHADER_SOURCE =
     'varying vec2 vTexCoord;\n'+
     'void main(){\n' +
     '   gl_FragColor = texture2D(uSampler1, vTexCoord);\n' + //tekstura 1.
-    '   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
-    '   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
+    //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
+    //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '}\n';
 
 // == Funkcje pomocnicze ==========================================================================
@@ -397,6 +397,10 @@ function drawStuff() {
     var floorImg = new Image();
     floorImg.src = "basketStyle.jpg";
     floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, floor_u_Sampler, 0, floorImg); };
+
+    console.log(gl.TEXTURE0);
+    console.log(gl.TEXTURE_2D);
+
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler2');
@@ -404,6 +408,10 @@ function drawStuff() {
     var cubeImg = new Image();
     cubeImg.src = "differentWalls.jpg";
     cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, cube_u_Sampler, 1, cubeImg); };
+
+    console.log(gl.TEXTURE1);
+    console.log(gl.TEXTURE_2D);
+
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler3');
@@ -411,6 +419,10 @@ function drawStuff() {
     var sphereImg = new Image();
     sphereImg.src = "cracked.jpg";
     sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, sphere_u_Sampler, 2, sphereImg); };
+
+    console.log(gl.TEXTURE2);
+    console.log(gl.TEXTURE_2D);
+
     gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 
 
