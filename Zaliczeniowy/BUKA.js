@@ -20,18 +20,18 @@ var VSHADER_SOURCE =
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'uniform sampler2D uSampler;\n' +
-    //'uniform sampler2D uSampler1;\n' +
-    //'uniform sampler2D uSampler2;\n' +
-    //'uniform sampler2D uSampler3;\n' +
+        //'uniform sampler2D uSampler1;\n' +
+        //'uniform sampler2D uSampler2;\n' +
+        //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'void main(){\n' +
-    //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
-    //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
-    //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
+        //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
+        //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
+        //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
     '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
-    //'   gl_FragColor = color2 * color3;\n' + //desperacja t-t
-    //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
-    //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
+        //'   gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
+        //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
+        //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '}\n';
 
 // == Funkcje pomocnicze ==========================================================================
@@ -110,8 +110,7 @@ function keydown(ev, gl, n, u_ViewMatrix){
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     // rysuje elementy sceny:
-    //gl.drawArrays(gl.TRIANGLES, 0, n);
-    gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_SHORT, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, n);
 }
 
 
@@ -190,19 +189,16 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     // ustawiam wyjsciowa rotacje i rysuje podloze:
     gl.uniformMatrix4fv(tMatrix, false, identity);
     gl.uniformMatrix4fv(rMatrix, false, identity);
-    //gl.drawArrays(gl.TRIANGLES, 0, floorN);
-    gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_SHORT, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     // ustawiam rotacje dla szescianu i go rysuje:
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-    //gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
-    gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_SHORT, floorN);
+    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     // ustawiam wyjsciowa rotacje i rysuje sfere:
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
-    //gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
-    gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_SHORT, floorN + cubeN);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 }
 
 
@@ -220,11 +216,6 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl. RGB, gl.UNSIGNED_BYTE, img);
     gl.uniform1i(u_Sampler, index); // przeniesienie do pamieci
-
-
-    gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 
@@ -277,25 +268,25 @@ function drawStuff() {
             // podloze:
             -0.5, -0.5, -0.5,   0.25, 0.25,
             -0.5, -0.5,  0.5,   0.25, 0.5,
-             0.5, -0.5, -0.5,   0.5,  0.25,
-             0.5, -0.5, -0.5,   0.5,  0.25,
+            0.5, -0.5, -0.5,   0.5,  0.25,
+            0.5, -0.5, -0.5,   0.5,  0.25,
             -0.5, -0.5,  0.5,   0.25, 0.5,
-             0.5, -0.5,  0.5,   0.5,  0.5,
+            0.5, -0.5,  0.5,   0.5,  0.5,
 
             // szescian:
             -0.1, -0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1, -0.1,  0.1,   1.0,  0.5,
             -0.1, -0.1, -0.1,   0.5,  0.75,
             -0.1, -0.1, -0.1,   0.5,  0.75,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.75,
+            0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1, -0.1, -0.1,   1.0,  0.75,
 
             -0.1, -0.1, -0.1,   0.5,  0.0,
-             0.1, -0.1, -0.1,   1.0,  0.0,
+            0.1, -0.1, -0.1,   1.0,  0.0,
             -0.1,  0.1, -0.1,   0.5,  0.25,
             -0.1,  0.1, -0.1,   0.5,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-             0.1,  0.1, -0.1,   1.0,  0.25,
+            0.1, -0.1, -0.1,   1.0,  0.0,
+            0.1,  0.1, -0.1,   1.0,  0.25,
 
             -0.1, -0.1,  0.1,   0.0,  0.5,
             -0.1, -0.1, -0.1,   0.0,  0.25,
@@ -305,41 +296,41 @@ function drawStuff() {
             -0.1,  0.1, -0.1,   0.5,  0.25,
 
             -0.1, -0.1,  0.1,   0.0,  0.25,
-             0.1, -0.1,  0.1,   0.5,  0.25,
+            0.1, -0.1,  0.1,   0.5,  0.25,
             -0.1,  0.1,  0.1,   0.0,  0.0,
             -0.1,  0.1,  0.1,   0.0,  0.0,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.0,
+            0.1, -0.1,  0.1,   0.5,  0.25,
+            0.1,  0.1,  0.1,   0.5,  0.0,
 
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1,  0.1, -0.1,   0.5,  0.25,
+            0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1,  0.1,  0.1,   0.5,  0.5,
+            0.1, -0.1, -0.1,   1.0,  0.25,
+            0.1, -0.1, -0.1,   1.0,  0.25,
+            0.1,  0.1,  0.1,   0.5,  0.5,
+            0.1,  0.1, -0.1,   0.5,  0.25,
 
-             0.1,  0.1,  0.1,   0.5,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
+            0.1,  0.1,  0.1,   0.5,  0.75,
+            0.1,  0.1, -0.1,   0.5,  0.5,
             -0.1,  0.1,  0.1,   0.0,  0.75,
             -0.1,  0.1,  0.1,   0.0,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
+            0.1,  0.1, -0.1,   0.5,  0.5,
             -0.1,  0.1, -0.1,   0.0,  0.5,
 
 
             // sfera:
             -0.1, -0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1, -0.1,  0.1,   1.0,  0.5,
             -0.1, -0.1, -0.1,   0.5,  0.75,
             -0.1, -0.1, -0.1,   0.5,  0.75,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.75,
+            0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1, -0.1, -0.1,   1.0,  0.75,
 
             -0.1, -0.1, -0.1,   0.5,  0.0,
-             0.1, -0.1, -0.1,   1.0,  0.0,
+            0.1, -0.1, -0.1,   1.0,  0.0,
             -0.1,  0.1, -0.1,   0.5,  0.25,
             -0.1,  0.1, -0.1,   0.5,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-             0.1,  0.1, -0.1,   1.0,  0.25,
+            0.1, -0.1, -0.1,   1.0,  0.0,
+            0.1,  0.1, -0.1,   1.0,  0.25,
 
             -0.1, -0.1,  0.1,   0.0,  0.5,
             -0.1, -0.1, -0.1,   0.0,  0.25,
@@ -349,24 +340,24 @@ function drawStuff() {
             -0.1,  0.1, -0.1,   0.5,  0.25,
 
             -0.1, -0.1,  0.1,   0.0,  0.25,
-             0.1, -0.1,  0.1,   0.5,  0.25,
+            0.1, -0.1,  0.1,   0.5,  0.25,
             -0.1,  0.1,  0.1,   0.0,  0.0,
             -0.1,  0.1,  0.1,   0.0,  0.0,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.0,
+            0.1, -0.1,  0.1,   0.5,  0.25,
+            0.1,  0.1,  0.1,   0.5,  0.0,
 
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1,  0.1, -0.1,   0.5,  0.25,
+            0.1, -0.1,  0.1,   1.0,  0.5,
+            0.1,  0.1,  0.1,   0.5,  0.5,
+            0.1, -0.1, -0.1,   1.0,  0.25,
+            0.1, -0.1, -0.1,   1.0,  0.25,
+            0.1,  0.1,  0.1,   0.5,  0.5,
+            0.1,  0.1, -0.1,   0.5,  0.25,
 
-             0.1,  0.1,  0.1,   0.5,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
+            0.1,  0.1,  0.1,   0.5,  0.75,
+            0.1,  0.1, -0.1,   0.5,  0.5,
             -0.1,  0.1,  0.1,   0.0,  0.75,
             -0.1,  0.1,  0.1,   0.0,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
+            0.1,  0.1, -0.1,   0.5,  0.5,
             -0.1,  0.1, -0.1,   0.0,  0.5
         ]
     );
@@ -383,10 +374,8 @@ function drawStuff() {
 
     // tworzenie bufora punktow:
     var vertexBuffer = gl.createBuffer();
-    //gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    //gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
 
 
     // wyciaganie danych z shadera:
@@ -420,11 +409,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE0);
 
-    gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_SHORT, 0);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
-
+    gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
@@ -434,11 +419,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE1);
 
-    gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_SHORT, floorN);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
-
+    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
@@ -448,10 +429,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE2);
 
-    gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_SHORT, floorN + cubeN);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 
 
     // animowanie sceny:
