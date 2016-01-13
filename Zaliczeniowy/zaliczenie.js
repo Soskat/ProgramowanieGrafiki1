@@ -19,12 +19,17 @@ var VSHADER_SOURCE =
 
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
-    'uniform sampler2D uSampler1;\n' +
-    'uniform sampler2D uSampler2;\n' +
-    'uniform sampler2D uSampler3;\n' +
+    'uniform sampler2D uSampler;\n' +
+    //'uniform sampler2D uSampler1;\n' +
+    //'uniform sampler2D uSampler2;\n' +
+    //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'void main(){\n' +
-    '   gl_FragColor = texture2D(uSampler1, vTexCoord);\n' + //tekstura 1.
+    //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
+    //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
+    //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
+    '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
+    //'    gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
     //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
     //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '}\n';
@@ -392,7 +397,7 @@ function drawStuff() {
 
 
     // tworzenie tekstur (i rysowanie elementow sceny):
-    var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler1');
+    var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
     floorImg.src = "basketStyle.jpg";
@@ -403,7 +408,7 @@ function drawStuff() {
 
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
-    var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler2');
+    var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
     cubeImg.src = "differentWalls.jpg";
@@ -414,7 +419,7 @@ function drawStuff() {
 
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
-    var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler3');
+    var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
     var sphereImg = new Image();
     sphereImg.src = "cracked.jpg";
