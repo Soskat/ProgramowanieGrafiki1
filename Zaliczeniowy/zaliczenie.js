@@ -139,6 +139,8 @@ function rotateY(m, angle) {
 }
 
 
+
+
 var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu
 var rotMatrixSphere = new Float32Array(16); // macierz rotacji sfery
 var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
@@ -176,7 +178,7 @@ function setNewRotateMatrix(rotMatrix, angle, axis){
 }
 
 
-var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);   // macierz translacji
+var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
 
 // Aktualizuje macierz translacji
 function setNewSphereTranslationMatrix(angle, r){
