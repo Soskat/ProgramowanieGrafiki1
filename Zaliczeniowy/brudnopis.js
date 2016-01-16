@@ -126,14 +126,6 @@ function drawStuff() {
     gl.program = program;
 
 
-    //  var pacmanPoints = 20;
-    //  var vertices = [];
-    //  vertices.push(0, 0);
-    //  for(var i = 0; i < pacmanPoints; i++){
-    //      vertices.push(0.5 * Math.cos(i * 2 * Math.PI / pacmanPoints));
-    //      vertices.push(0.5 * Math.sin(i * 2 * Math.PI / pacmanPoints));
-    //  }
-
     var vertices = [];   // robocza tablica wierzcholkow
 
     var R = 0.2, G = 0.8, B = 0.2;              // kolory testowe
@@ -152,19 +144,17 @@ function drawStuff() {
     var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych:
 
 
-    // rysujemy wierzch sfery:
-    vertices.push(0.0, bigR, 0.0, R, G, B);
-    upCape++;
-
     r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
     y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
 
+    // rysujemy wierzch sfery:
+    vertices.push(0.0, bigR, 0.0, R, G, B);
+    upCape++;
     for(j = 0; j <= accuracy; j++){
         vertices.push(r1 * Math.cos(j * alpha));
         vertices.push(y1);
         vertices.push(r1 * Math.sin(j * alpha));
         vertices.push(R, G, B);
-
         upCape++;
     }
 
@@ -195,10 +185,20 @@ function drawStuff() {
             vertices.push(p3x, y2, p3z, R, G, B);
             vertices.push(p1x, y1, p1z, R, G, B);
 
-            middle++;
+            middle += 6;
         }
     }
 
+    // rysujemy spod sfery:
+    vertices.push(0.0, -bigR, 0.0, R, G, B);
+    downCape++;
+    for(j = 0; j <= accuracy; j++){
+        vertices.push(r1 * Math.cos(j * alpha));
+        vertices.push(-y1);
+        vertices.push(r1 * Math.sin(j * alpha));
+        vertices.push(R, G, B);
+        downCape++;
+    }
 
 
 
@@ -207,7 +207,7 @@ function drawStuff() {
 
     var coloredVertices = new Float32Array(vertices);
     var n = coloredVertices.length / 6;
-    console.log(n);
+    console.log('n =', n, ', middle =', middle);
 
     var colouredVertexBuffer = gl.createBuffer();       // bufor kolorowanych wierzcholkow
     gl.bindBuffer(gl.ARRAY_BUFFER, colouredVertexBuffer);
@@ -237,7 +237,6 @@ function drawStuff() {
     gl.drawArrays(gl.TRIANGLE_FAN, 0, upCape);
     gl.drawArrays(gl.TRIANGLES, upCape, middle);
     gl.drawArrays(gl.TRIANGLE_FAN, upCape + middle, downCape);
-    //gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
 
 
     var tick = function(){
