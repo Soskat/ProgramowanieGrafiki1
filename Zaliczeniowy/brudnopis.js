@@ -89,8 +89,9 @@ function animate(gl, n, rotMatrix, u_ViewMatrix, upCape, middle, downCape){
 
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_FAN, 0, upCape);
-    gl.drawArrays(gl.TRIANGLE_FAN, upCape, middle);
+    gl.drawArrays(gl.TRIANGLES, upCape, middle);
     gl.drawArrays(gl.TRIANGLE_FAN, upCape + middle, downCape);
+    //gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
 }
 
 
@@ -124,80 +125,84 @@ function drawStuff() {
     gl.useProgram(program);
     gl.program = program;
 
-    var R = 0.2, G = 0.8, B = 0.2;
-    var xAccuracy = 10;             // musi byc parzysta!
-    var yAccuracy = 8;              // musi byc parzysta!
-    var alpha = 2 * Math.PI / xAccuracy;
-    var beta = Math.PI / yAccuracy;
-    var bigR = 0.5;
-    var r = bigR;
-    var upCape = 0, middle = 0, downCape = 0;
 
-    var vertices = [0.0, R, 0.0, R, G, B];
+    //  var pacmanPoints = 20;
+    //  var vertices = [];
+    //  vertices.push(0, 0);
+    //  for(var i = 0; i < pacmanPoints; i++){
+    //      vertices.push(0.5 * Math.cos(i * 2 * Math.PI / pacmanPoints));
+    //      vertices.push(0.5 * Math.sin(i * 2 * Math.PI / pacmanPoints));
+    //  }
+
+    var vertices = [];   // robocza tablica wierzcholkow
+
+    var R = 0.2, G = 0.8, B = 0.2;              // kolory testowe
+    var upCape = 0, middle = 0, downCape = 0;   // liczniki wierzcholkow spodow i ciala sfery
+
+    // stale:
+    var bigR = 0.7;                         // promien sfery
+    var accuracy = 10;                      // dokladnosc modelu sfery
+    var alpha = 2 * Math.PI / accuracy;     // kat na plaszczyznie X-Z
+    var beta = Math.PI / accuracy;          // kat na plaszczyznie X-Y
+
+    // zmienne:
+    var i = 1, j;                                   // indeksy
+    var r1, r2;                                     // promienie dwoch wycinkow sfery
+    var y1, y2;                                     // wspolrzedne Y dwoch poziomow punktow
+    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych:
+
+
+    // rysujemy wierzch sfery:
+    vertices.push(0.0, bigR, 0.0, R, G, B);
     upCape++;
 
+    r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
+    y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
 
-    // rysowanie spodu i wierzchu sfery:
-    var yindex = 1;
-    r = bigR * Math.cos(beta);
-    for(var i = 0; i <= xAccuracy; i++){
-        vertices.push(r * Math.cos(i * alpha));
-        vertices.push(r * Math.sin(yindex * beta));
-        vertices.push(r * Math.sin(i * alpha));
-        vertices.push(R);
-        vertices.push(G);
-        vertices.push(B);
+    for(j = 0; j <= accuracy; j++){
+        vertices.push(r1 * Math.cos(j * alpha));
+        vertices.push(y1);
+        vertices.push(r1 * Math.sin(j * alpha));
+        vertices.push(R, G, B);
 
         upCape++;
     }
 
-    var p1x, p1y, p1z;
-    var p2x, p2y, p2z;
-    var p3x, p3y, p3z;
-    var p4x, p4y, p4z;
-    yindex++;
-    for(i = 1; i < yAccuracy; i++){
-        p1x = (r * Math.cos(i * alpha));
-        p1y = (r * Math.sin(yindex * beta));
-        p2z = (r * Math.sin(i * alpha));
+    for(i; i <= accuracy; i++){
+        // aktualizujemy dlugosc r1, r2, y1 i y2:
+        r1 = bigR * Math.sin(i * beta);
+        r2 = bigR * Math.sin((i + 1) * beta);
+        y1 = bigR * Math.cos(i * beta);
+        y2 = bigR * Math.cos((i + 1) * beta);
 
-        p2x = (r * Math.cos((i + 1) * alpha));
-        p2y = (r * Math.sin(yindex * beta));
-        p2z = (r * Math.sin((i + 1) * alpha));
+        for(j = 0; j <= accuracy; j++){
+            // poziom I punktow:
+            p1x = r1 * Math.cos(j * alpha);
+            p1z = r1 * Math.sin(j * alpha);
+            p2x = r1 * Math.cos((j + 1) * alpha);
+            p2z = r1 * Math.sin((j + 1) * alpha);
+            // poziom II punktow:
+            p3x = r2 * Math.cos(j * alpha);
+            p3z = r2 * Math.sin(j * alpha);
+            p4x = r2 * Math.cos((j + 1) * alpha);
+            p4z = r2 * Math.sin((j + 1) * alpha);
 
-        p3x = (r * Math.cos(i * alpha));
-        p3y = (r * Math.sin((yindex + 1) * beta));
-        p3z = (r * Math.sin(i * alpha));
+            // wsadzamy punktu do tablicy:
+            vertices.push(p1x, y1, p1z, R, G, B);
+            vertices.push(p2x, y1, p2z, R, G, B);
+            vertices.push(p4x, y2, p4z, R, G, B);
+            vertices.push(p4x, y2, p4z, R, G, B);
+            vertices.push(p3x, y2, p3z, R, G, B);
+            vertices.push(p1x, y1, p1z, R, G, B);
 
-        p4x = (r * Math.cos((i + 1) * alpha));
-        p4y = (r * Math.sin((yindex + 1) * beta));
-        p4z = (r * Math.sin((i + 1) * alpha));
-
-        vertices.push(p1x, p1y, p1z, R, G, B);
-        vertices.push(p2x, p2y, p2z, R, G, B);
-        vertices.push(p4x, p4y, p4z, R, G, B);
-
-        vertices.push(p1x, p1y, p1z, R, G, B);
-        vertices.push(p4x, p4y, p4z, R, G, B);
-        vertices.push(p3x, p3y, p3z, R, G, B);
-
-        yindex++;
-        middle++;
+            middle++;
+        }
     }
 
 
-    vertices.push(0.0, -R, 0.0, G, G, G);
-    downCape++;
-    for(i = 0; i <= xAccuracy; i++){
-        vertices.push(r * Math.cos(i * alpha));
-        vertices.push(-r * Math.sin(yindex * beta));
-        vertices.push(r * Math.sin(i * alpha));
-        vertices.push(G);
-        vertices.push(G);
-        vertices.push(G);
 
-        downCape++;
-    }
+
+
 
 
     var coloredVertices = new Float32Array(vertices);
@@ -230,8 +235,9 @@ function drawStuff() {
 
     // pamietaj aby zmieniac tez funkcje animacji !
     gl.drawArrays(gl.TRIANGLE_FAN, 0, upCape);
-    gl.drawArrays(gl.TRIANGLE_FAN, upCape, middle);
+    gl.drawArrays(gl.TRIANGLES, upCape, middle);
     gl.drawArrays(gl.TRIANGLE_FAN, upCape + middle, downCape);
+    //gl.drawArrays(gl.TRIANGLE_FAN, 0, n);
 
 
     var tick = function(){
