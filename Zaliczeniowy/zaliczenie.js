@@ -195,7 +195,7 @@ var g_last = Date.now();
 var currentAngle = 0.0;
 
 // Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
+function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, middle, downCape){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
@@ -228,7 +228,9 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     // ustawiam wyjsciowa rotacje i rysuje sfere:
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
-    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
+    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
+    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 }
 
 
@@ -248,6 +250,97 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
     gl.uniform1i(u_Sampler, index); // przeniesienie do pamieci
 }
 
+
+
+
+
+var bigR = 0.2;                             // promien sfery
+var accuracy = 10;                          // dokladnosc modelu sfery
+var upCape = 0, middle = 0, downCape = 0;   // liczniki wierzcholkow spodow i ciala sfery
+
+// Rysuje model sfery:
+function drawSphere(vertices, bigR, accuracy){
+    var alpha = 2 * Math.PI / accuracy;             // kat na plaszczyznie X-Z
+    var beta = Math.PI / accuracy;                  // kat na plaszczyznie X-Y
+    var i = 1, j;                                   // indeksy
+    var r1, r2;                                     // promienie dwoch wycinkow sfery
+    var y1, y2;                                     // wspolrzedne Y dwoch poziomow punktow
+    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych:
+    // wierzcholki tekstury:
+    var t0x = 0.5, t0y = 0.0;
+    var t1x = 0.0, t1y = 0.0;
+    var t2x = 1.0, t2y = 0.0;
+    var t3x = 0.0, t3y = 1.0;
+    var t4x = 1.0, t4y = 1.0;
+
+    r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
+    y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
+
+    // rysujemy wierzch sfery:
+    vertices.push(0.0, bigR, 0.0, t0x, t0y);
+    upCape++;
+    for(j = 0; j <= accuracy; j++){
+        vertices.push(r1 * Math.cos(j * alpha));
+        vertices.push(y1);
+        vertices.push(r1 * Math.sin(j * alpha));
+        if(j % 2 == 0){
+            vertices.push(t3x, t3y);
+        }
+        else{
+            vertices.push(t4x, t4y);
+        }
+        upCape++;
+    }
+
+    for(i; i <= accuracy; i++){
+        // aktualizujemy dlugosc r1, r2, y1 i y2:
+        r1 = bigR * Math.sin(i * beta);
+        r2 = bigR * Math.sin((i + 1) * beta);
+        y1 = bigR * Math.cos(i * beta);
+        y2 = bigR * Math.cos((i + 1) * beta);
+
+        for(j = 0; j <= accuracy; j++){
+            // poziom I punktow:
+            p1x = r1 * Math.cos(j * alpha);
+            p1z = r1 * Math.sin(j * alpha);
+            p2x = r1 * Math.cos((j + 1) * alpha);
+            p2z = r1 * Math.sin((j + 1) * alpha);
+            // poziom II punktow:
+            p3x = r2 * Math.cos(j * alpha);
+            p3z = r2 * Math.sin(j * alpha);
+            p4x = r2 * Math.cos((j + 1) * alpha);
+            p4z = r2 * Math.sin((j + 1) * alpha);
+
+            // wsadzamy punktu do tablicy:
+            vertices.push(p1x, y1, p1z, t1x, t1y);
+            vertices.push(p2x, y1, p2z, t2x, t2y);
+            vertices.push(p4x, y2, p4z, t4x, t4y);
+            vertices.push(p4x, y2, p4z, t4x, t4y);
+            vertices.push(p3x, y2, p3z, t3x, t3y);
+            vertices.push(p1x, y1, p1z, t1x, t1y);
+
+            middle += 6;
+        }
+    }
+
+    // rysujemy spod sfery:
+    vertices.push(0.0, -bigR, 0.0, t0x, t0y);
+    downCape++;
+    for(j = 0; j <= accuracy; j++){
+        vertices.push(r1 * Math.cos(j * alpha));
+        vertices.push(-y1);
+        vertices.push(r1 * Math.sin(j * alpha));
+        if(j % 2 == 0){
+            vertices.push(t3x, t3y);
+        }
+        else{
+            vertices.push(t4x, t4y);
+        }
+        downCape++;
+    }
+
+    return vertices;
+}
 
 
 // == Program glowny ==============================================================================
@@ -291,108 +384,66 @@ function drawStuff() {
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
 
-    var texturedVertices = new Float32Array
-    (
-        [  // wspolrz.:    // wspolrz. tekstury:
+    var vertices = [
+        // wspolrz.:     // wspolrz. tekstury:
+        -0.5, -0.5, -0.5,   0.25, 0.25,
+        -0.5, -0.5,  0.5,   0.25, 0.5,
+         0.5, -0.5, -0.5,   0.5,  0.25,
+         0.5, -0.5, -0.5,   0.5,  0.25,
+        -0.5, -0.5,  0.5,   0.25, 0.5,
+         0.5, -0.5,  0.5,   0.5,  0.5
+    ];
+    var floorN = vertices.length / 5;
 
-            // podloze:
-            -0.5, -0.5, -0.5,   0.25, 0.25,
-            -0.5, -0.5,  0.5,   0.25, 0.5,
-             0.5, -0.5, -0.5,   0.5,  0.25,
-             0.5, -0.5, -0.5,   0.5,  0.25,
-            -0.5, -0.5,  0.5,   0.25, 0.5,
-             0.5, -0.5,  0.5,   0.5,  0.5,
+    vertices.push(
+        // wspolrz.:     // wspolrz. tekstury:
+        -0.1, -0.1,  0.1,   0.5,  0.5,
+         0.1, -0.1,  0.1,   1.0,  0.5,
+        -0.1, -0.1, -0.1,   0.5,  0.75,
+        -0.1, -0.1, -0.1,   0.5,  0.75,
+         0.1, -0.1,  0.1,   1.0,  0.5,
+         0.1, -0.1, -0.1,   1.0,  0.75,
 
-            // szescian:
-            -0.1, -0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-            -0.1, -0.1, -0.1,   0.5,  0.75,
-            -0.1, -0.1, -0.1,   0.5,  0.75,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.75,
+        -0.1, -0.1, -0.1,   0.5,  0.0,
+         0.1, -0.1, -0.1,   1.0,  0.0,
+        -0.1,  0.1, -0.1,   0.5,  0.25,
+        -0.1,  0.1, -0.1,   0.5,  0.25,
+         0.1, -0.1, -0.1,   1.0,  0.0,
+         0.1,  0.1, -0.1,   1.0,  0.25,
 
-            -0.1, -0.1, -0.1,   0.5,  0.0,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-             0.1,  0.1, -0.1,   1.0,  0.25,
+        -0.1, -0.1,  0.1,   0.0,  0.5,
+        -0.1, -0.1, -0.1,   0.0,  0.25,
+        -0.1,  0.1,  0.1,   0.5,  0.5,
+        -0.1,  0.1,  0.1,   0.5,  0.5,
+        -0.1, -0.1, -0.1,   0.0,  0.25,
+        -0.1,  0.1, -0.1,   0.5,  0.25,
 
-            -0.1, -0.1,  0.1,   0.0,  0.5,
-            -0.1, -0.1, -0.1,   0.0,  0.25,
-            -0.1,  0.1,  0.1,   0.5,  0.5,
-            -0.1,  0.1,  0.1,   0.5,  0.5,
-            -0.1, -0.1, -0.1,   0.0,  0.25,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
+        -0.1, -0.1,  0.1,   0.0,  0.25,
+         0.1, -0.1,  0.1,   0.5,  0.25,
+        -0.1,  0.1,  0.1,   0.0,  0.0,
+        -0.1,  0.1,  0.1,   0.0,  0.0,
+         0.1, -0.1,  0.1,   0.5,  0.25,
+         0.1,  0.1,  0.1,   0.5,  0.0,
 
-            -0.1, -0.1,  0.1,   0.0,  0.25,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-            -0.1,  0.1,  0.1,   0.0,  0.0,
-            -0.1,  0.1,  0.1,   0.0,  0.0,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.0,
+         0.1, -0.1,  0.1,   1.0,  0.5,
+         0.1,  0.1,  0.1,   0.5,  0.5,
+         0.1, -0.1, -0.1,   1.0,  0.25,
+         0.1, -0.1, -0.1,   1.0,  0.25,
+         0.1,  0.1,  0.1,   0.5,  0.5,
+         0.1,  0.1, -0.1,   0.5,  0.25,
 
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1,  0.1, -0.1,   0.5,  0.25,
-
-             0.1,  0.1,  0.1,   0.5,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
-            -0.1,  0.1,  0.1,   0.0,  0.75,
-            -0.1,  0.1,  0.1,   0.0,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
-            -0.1,  0.1, -0.1,   0.0,  0.5,
-
-
-            // sfera:
-            -0.1, -0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-            -0.1, -0.1, -0.1,   0.5,  0.75,
-            -0.1, -0.1, -0.1,   0.5,  0.75,
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.75,
-
-            -0.1, -0.1, -0.1,   0.5,  0.0,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.0,
-             0.1,  0.1, -0.1,   1.0,  0.25,
-
-            -0.1, -0.1,  0.1,   0.0,  0.5,
-            -0.1, -0.1, -0.1,   0.0,  0.25,
-            -0.1,  0.1,  0.1,   0.5,  0.5,
-            -0.1,  0.1,  0.1,   0.5,  0.5,
-            -0.1, -0.1, -0.1,   0.0,  0.25,
-            -0.1,  0.1, -0.1,   0.5,  0.25,
-
-            -0.1, -0.1,  0.1,   0.0,  0.25,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-            -0.1,  0.1,  0.1,   0.0,  0.0,
-            -0.1,  0.1,  0.1,   0.0,  0.0,
-             0.1, -0.1,  0.1,   0.5,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.0,
-
-             0.1, -0.1,  0.1,   1.0,  0.5,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1, -0.1, -0.1,   1.0,  0.25,
-             0.1,  0.1,  0.1,   0.5,  0.5,
-             0.1,  0.1, -0.1,   0.5,  0.25,
-
-             0.1,  0.1,  0.1,   0.5,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
-            -0.1,  0.1,  0.1,   0.0,  0.75,
-            -0.1,  0.1,  0.1,   0.0,  0.75,
-             0.1,  0.1, -0.1,   0.5,  0.5,
-            -0.1,  0.1, -0.1,   0.0,  0.5
-        ]
+         0.1,  0.1,  0.1,   0.5,  0.75,
+         0.1,  0.1, -0.1,   0.5,  0.5,
+        -0.1,  0.1,  0.1,   0.0,  0.75,
+        -0.1,  0.1,  0.1,   0.0,  0.75,
+         0.1,  0.1, -0.1,   0.5,  0.5,
+        -0.1,  0.1, -0.1,   0.0,  0.5
     );
-    var N = texturedVertices.length / 6;
-    var floorN = 6, cubeN = 36, sphereN = 36;
+    var cubeN = (vertices.length / 5) - floorN;
+
+    vertices = drawSphere(vertices, bigR, accuracy);
+
+    var texturedVertices = new Float32Array(vertices);
 
     var FSIZE = texturedVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
 
@@ -409,7 +460,6 @@ function drawStuff() {
 
 
     // wyciaganie danych z shadera:
-
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
     document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
@@ -441,6 +491,7 @@ function drawStuff() {
 
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
+
     var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
@@ -451,6 +502,7 @@ function drawStuff() {
 
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
+
     var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
     var sphereImg = new Image();
@@ -459,13 +511,15 @@ function drawStuff() {
 
     console.log(gl.TEXTURE2);
 
-    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
+    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
+    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 
 
     // animowanie sceny:
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
-        requestAnimationFrame(tick);                                            // request that the browser calls tick
+        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, upCape, middle, downCape);  // uruchamia animacje elementow sceny
+        requestAnimationFrame(tick);                                                                // request that the browser calls tick
     };
 
     tick();
