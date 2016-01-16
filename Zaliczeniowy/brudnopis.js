@@ -1,19 +1,12 @@
-/**
- * Created by nocah on 16.12.2015.
- */
-
-
-// == Programy shaderow ===========================================================================
 
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
     'attribute vec4 a_color;\n'+
     'varying vec4 v_color;\n'+
     'uniform mat4 u_ViewMatrix;\n'+
-    'uniform mat4 rmatrix;\n'+
-    'uniform mat4 tmatrix;\n'+
+    'uniform mat4 rmatrixY;\n'+
     'void main() {\n' +
-    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
+    '   gl_Position = u_ViewMatrix * position;\n' +
     '   v_color = a_color;\n' +
     '}\n';
 
@@ -24,179 +17,80 @@ var FSHADER_SOURCE =
     '   gl_FragColor = v_color;\n' +  //kolor punktu
     '}\n';
 
-// == Funkcje pomocnicze ==========================================================================
 
-var viewMatrix = new Float32Array(16);  // macierz widoku
+var viewMatrix = new Float32Array([
+    1, 0, 0, 0,
+    0, 1, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+]);  // macierz widoku
 
-// Ustawia macierz widoku
-function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
-    var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
+var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
 
-    fx = centerX - eyeX;
-    fy = centerY - eyeY;
-    fz = centerZ - eyeZ;
-
-    rlf = 1 / Math.sqrt(fx*fx + fy*fy + fz*fz);
-    fx *= rlf;
-    fy *= rlf;
-    fz *= rlf;
-
-    sx = fy * upZ - fz * upY;
-    sy = fz * upX - fx * upZ;
-    sz = fx * upY - fy * upX;
-
-    rls = 1 / Math.sqrt(sx*sx + sy*sy + sz*sz);
-    sx *= rls;
-    sy *= rls;
-    sz *= rls;
-
-    ux = sy * fz - sz * fy;
-    uy = sz * fx - sx * fz;
-    uz = sx * fy - sy * fx;
-
-    viewMatrix[0] = sx;
-    viewMatrix[1] = ux;
-    viewMatrix[2] = -fx;
-    viewMatrix[4] = 0;
-
-    viewMatrix[4] = sy;
-    viewMatrix[5] = uy;
-    viewMatrix[6] = -fy;
-    viewMatrix[7] = 0;
-
-    viewMatrix[8] = sz;
-    viewMatrix[9] = uz;
-    viewMatrix[10] = -fz;
-    viewMatrix[11] = 0;
-
-    viewMatrix[12] = 0;
-    viewMatrix[13] = 0;
-    viewMatrix[14] = 0;
-    viewMatrix[15] = 1;
-}
-
-
-var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
-
-// Obsluga klawiszy strzalek:
-function keydown(ev, gl, n, u_ViewMatrix){
+// Obsluga klawiszy strzalek
+function keydown(ev){
     if(ev.keyCode == 38){
-        g_eyeY += 0.02;
+        phi += 0.05;
     }
     else if(ev.keyCode == 40){
-        g_eyeY -= 0.02;
+        phi -= 0.05;
     }
     else if(ev.keyCode == 39){
-        g_eyeX += 0.02;
+        theta += 0.05;
     }
     else if(ev.keyCode == 37){
-        g_eyeX -= 0.02;
-    }
-    else{
-        return;
-    }
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    // rysuje elementy sceny:
-    gl.drawArrays(gl.TRIANGLES, 0, n);
-}
-
-
-
-var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu
-var rotMatrixSphere = new Float32Array(16); // macierz rotacji sfery
-var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-
-// Aktualizuje macierz rotacji
-function setNewRotateMatrix(rotMatrix, angle, axis){
-    var radian = Math.PI * angle / 180.0;   // degr to radians
-    var cosB = Math.cos(radian);
-    var sinB = Math.sin(radian);
-
-    if(axis == 'X'){
-        rotMatrix[0] = 1.0;
-        rotMatrix[5] = cosB;
-        rotMatrix[6] = sinB;
-        rotMatrix[9] = -sinB;
-        rotMatrix[10] = cosB;
-        rotMatrix[15] = 1.0;
-    }
-    else if(axis == 'Y'){
-        rotMatrix[0] = cosB;
-        rotMatrix[2] = -sinB;
-        rotMatrix[5] = 1.0;
-        rotMatrix[8] = sinB;
-        rotMatrix[10] = cosB;
-        rotMatrix[15] = 1.0;
-    }
-    else if(axis == 'Z'){
-        rotMatrix[0] = cosB;
-        rotMatrix[1] = sinB;
-        rotMatrix[4] = -sinB;
-        rotMatrix[5] = cosB;
-        rotMatrix[10] = 1.0;
-        rotMatrix[15] = 1.0;
+        theta -= 0.05;
     }
 }
 
+// Obraca podana macierz w osi X o wskazany kat
+function rotateX(m, angle) {
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+    var mv1 = m[1], mv5 = m[5], mv9 = m[9];
 
-var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+    m[1] = m[1] * c - m[2] * s;
+    m[5] = m[5] * c - m[6] * s;
+    m[9] = m[9] * c - m[10] * s;
 
-// Aktualizuje macierz translacji
-function setNewSphereTranslationMatrix(angle, r){
-    var radian = Math.PI * angle / 180.0;   // degr to radians
-    var cosB = Math.cos(radian);
-    var sinB = Math.sin(radian);
-
-    transMatrix[12] = r * sinB;     // vx
-    transMatrix[14] = r * cosB;     // vz
+    m[2] = m[2] * c + mv1 * s;
+    m[6] = m[6] * c + mv5 * s;
+    m[10] = m[10] * c + mv9 * s;
 }
 
-var g_last = Date.now();
-var currentAngle = 0.0;
 
-// Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
-    var ANGLE_STEP = 45.0;
-    var now = Date.now();
-    var elapsed = now - g_last; // milisec
-    g_last = now;
-    currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
+// Obraca podana macierz w osi Y o wskazany kat
+function rotateY(m, angle) {
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
 
-    setNewSphereTranslationMatrix(currentAngle, r);             // przesuniecie sfery
-    setNewRotateMatrix(rotMatrixSphere, currentAngle, 'X');     // rotacja sfery
-    setNewRotateMatrix(rotMatrixCube, currentAngle, 'Y');       // rotacja szescianu
+    var mv0 = m[0], mv4 = m[4], mv8 = m[8];
+    m[0] = c * m[0] + s * m[2];
+    m[4] = c * m[4] + s * m[6];
+    m[8] = c * m[8] + s * m[10];
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+    m[2] = c * m[2] - s * mv0;
+    m[6] = c * m[6] - s * mv4;
+    m[10] = c * m[10] - s * mv8;
+}
 
+
+var rotMatrix = new Float32Array(16);   // macierz rotacji wokol osi Y
+
+// Animowanie rotacji piramidy wokol osi Y
+function animate(gl, n, rotMatrix, u_ViewMatrix){
     // aktualizacja perspektywy:
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
+    rotateY(viewMatrix, theta);
+    rotateX(viewMatrix, phi);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
+    theta = 0.0;
+    phi = 0.0;
 
-    // ustawiam wyjsciowa rotacje i rysuje podloze:
-    gl.uniformMatrix4fv(tMatrix, false, identity);
-    gl.uniformMatrix4fv(rMatrix, false, identity);
-    gl.drawArrays(gl.TRIANGLES, 0, floorN);
-
-    // ustawiam rotacje dla szescianu i go rysuje:
-    gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
-
-    // ustawiam wyjsciowa rotacje i rysuje sfere:
-    gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-    gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
-    //gl.uniformMatrix4fv(rMatrix, false, identity);
-    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n/2);
+    gl.drawArrays(gl.TRIANGLE_FAN, n/2, n/2);
 }
 
-
-
-
-
-// == Program glowny ==============================================================================
 
 // Rysuje rzeczy w Canvasie:
 function drawStuff() {
@@ -228,154 +122,83 @@ function drawStuff() {
     gl.useProgram(program);
     gl.program = program;
 
+    var R = 0.2, G = 0.8, B = 0.2;
+    var xAccuracy = 10;
+    var yAccuracy = 8;
+    var alpha = 2 * Math.PI / xAccuracy;
+    var beta = Math.PI / yAccuracy;
+    var r = 0.5;
 
-    // czyszczenie bufora:
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.enable(gl.DEPTH_TEST);
-    gl.clearDepth(1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-
-    var coloredVertices = new Float32Array
-    (
-        [  // wspolrz.:   // RGB:
-
-            // podloze:
-            -0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
-            -0.5, -0.5,  0.5,  0.5, 0.5, 0.5,
-            0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
-            0.5, -0.5, -0.5,  0.5, 0.5, 0.5,
-            -0.5, -0.5,  0.5,  0.5, 0.5, 0.5,
-            0.5, -0.5,  0.5,  0.5, 0.5, 0.5,
-
-            // szescian:
-            -0.1, -0.1,  0.1,   0.1, 0.8, 0.2,
-            0.1, -0.1,  0.1,   0.1, 0.8, 0.2,
-            -0.1, -0.1, -0.1,   0.1, 0.8, 0.2,
-            -0.1, -0.1, -0.1,   0.1, 0.8, 0.2,
-            0.1, -0.1,  0.1,   0.1, 0.8, 0.2,
-            0.1, -0.1, -0.1,   0.1, 0.8, 0.2,
-
-            -0.1, -0.1, -0.1,   0.4, 0.3, 0.2,
-            0.1, -0.1, -0.1,   0.4, 0.3, 0.2,
-            -0.1,  0.1, -0.1,   0.4, 0.3, 0.2,
-            -0.1,  0.1, -0.1,   0.4, 0.3, 0.2,
-            0.1, -0.1, -0.1,   0.4, 0.3, 0.2,
-            0.1,  0.1, -0.1,   0.4, 0.3, 0.2,
-
-            -0.1, -0.1,  0.1,   0.3, 0.5, 0.2,
-            -0.1, -0.1, -0.1,   0.3, 0.5, 0.2,
-            -0.1,  0.1,  0.1,   0.3, 0.5, 0.2,
-            -0.1,  0.1,  0.1,   0.3, 0.5, 0.2,
-            -0.1, -0.1, -0.1,   0.3, 0.5, 0.2,
-            -0.1,  0.1, -0.1,   0.3, 0.5, 0.2,
-
-            -0.1, -0.1,  0.1,   0.4, 0.3, 0.2,
-            0.1, -0.1,  0.1,   0.4, 0.3, 0.2,
-            -0.1,  0.1,  0.1,   0.4, 0.3, 0.2,
-            -0.1,  0.1,  0.1,   0.4, 0.3, 0.2,
-            0.1, -0.1,  0.1,   0.4, 0.3, 0.2,
-            0.1,  0.1,  0.1,   0.4, 0.3, 0.2,
-
-            0.1, -0.1,  0.1,   0.3, 0.5, 0.2,
-            0.1,  0.1,  0.1,   0.3, 0.5, 0.2,
-            0.1, -0.1, -0.1,   0.3, 0.5, 0.2,
-            0.1, -0.1, -0.1,   0.3, 0.5, 0.2,
-            0.1,  0.1,  0.1,   0.3, 0.5, 0.2,
-            0.1,  0.1, -0.1,   0.3, 0.5, 0.2,
-
-            0.1,  0.1,  0.1,   0.1, 0.8, 0.2,
-            0.1,  0.1, -0.1,   0.1, 0.8, 0.2,
-            -0.1,  0.1,  0.1,   0.1, 0.8, 0.2,
-            -0.1,  0.1,  0.1,   0.1, 0.8, 0.2,
-            0.1,  0.1, -0.1,   0.1, 0.8, 0.2,
-            -0.1,  0.1, -0.1,   0.1, 0.8, 0.2,
+    var pattern = [0.0, r, 0.0, R, G, B];
+    for(var ip = 0; ip <= xAccuracy; ip++){
+        pattern.push(r * Math.cos(ip * alpha));
+        pattern.push(0.3);
+        pattern.push(r * Math.sin(ip * alpha));
+        pattern.push(R);
+        pattern.push(G);
+        pattern.push(B);
+    }
 
 
-            // sfera:
-            -0.1, -0.1,  0.1,   0.2, 0.6, 0.1,
-            0.1, -0.1,  0.1,   0.2, 0.6, 0.1,
-            -0.1, -0.1, -0.1,   0.2, 0.6, 0.1,
-            -0.1, -0.1, -0.1,   0.2, 0.6, 0.1,
-            0.1, -0.1,  0.1,   0.2, 0.6, 0.1,
-            0.1, -0.1, -0.1,   0.2, 0.6, 0.1,
+    var vertices = [0.0, r, 0.0, R, G, B];
+    // rysowanie spodu i wierzchu sfery:
+    var yindex = 1;
+    for(var i = 0; i <= xAccuracy; i++){
+        vertices.push(r * Math.cos(i * alpha));
+        vertices.push(r * Math.sin(yindex * beta));
+        vertices.push(r * Math.sin(i * alpha));
+        vertices.push(R);
+        vertices.push(G);
+        vertices.push(B);
+    }
 
-            -0.1, -0.1, -0.1,   0.4, 0.7, 0.3,
-            0.1, -0.1, -0.1,   0.4, 0.7, 0.3,
-            -0.1,  0.1, -0.1,   0.4, 0.7, 0.3,
-            -0.1,  0.1, -0.1,   0.4, 0.7, 0.3,
-            0.1, -0.1, -0.1,   0.4, 0.7, 0.3,
-            0.1,  0.1, -0.1,   0.4, 0.7, 0.3,
-
-            -0.1, -0.1,  0.1,   0.2, 0.2, 0.6,
-            -0.1, -0.1, -0.1,   0.2, 0.2, 0.6,
-            -0.1,  0.1,  0.1,   0.2, 0.2, 0.6,
-            -0.1,  0.1,  0.1,   0.2, 0.2, 0.6,
-            -0.1, -0.1, -0.1,   0.2, 0.2, 0.6,
-            -0.1,  0.1, -0.1,   0.2, 0.2, 0.6,
-
-            -0.1, -0.1,  0.1,   0.4, 0.7, 0.3,
-            0.1, -0.1,  0.1,   0.4, 0.7, 0.3,
-            -0.1,  0.1,  0.1,   0.4, 0.7, 0.3,
-            -0.1,  0.1,  0.1,   0.4, 0.7, 0.3,
-            0.1, -0.1,  0.1,   0.4, 0.7, 0.3,
-            0.1,  0.1,  0.1,   0.4, 0.7, 0.3,
-
-            0.1, -0.1,  0.1,   0.2, 0.2, 0.6,
-            0.1,  0.1,  0.1,   0.2, 0.2, 0.6,
-            0.1, -0.1, -0.1,   0.2, 0.2, 0.6,
-            0.1, -0.1, -0.1,   0.2, 0.2, 0.6,
-            0.1,  0.1,  0.1,   0.2, 0.2, 0.6,
-            0.1,  0.1, -0.1,   0.2, 0.2, 0.6,
-
-            0.1,  0.1,  0.1,   0.2, 0.6, 0.1,
-            0.1,  0.1, -0.1,   0.2, 0.6, 0.1,
-            -0.1,  0.1,  0.1,   0.2, 0.6, 0.1,
-            -0.1,  0.1,  0.1,   0.2, 0.6, 0.1,
-            0.1,  0.1, -0.1,   0.2, 0.6, 0.1,
-            -0.1,  0.1, -0.1,   0.2, 0.6, 0.1
-        ]
-    );
-    var N = coloredVertices.length / 6;
-    var floorN = 6, cubeN = 36, sphereN = 36;
+    vertices.push(0.0, -r, 0.0, G, G, G);
+    for(var i = 0; i <= xAccuracy; i++){
+        vertices.push(r * Math.cos(i * alpha));
+        vertices.push(-r * Math.sin(yindex * beta));
+        vertices.push(r * Math.sin(i * alpha));
+        vertices.push(G);
+        vertices.push(G);
+        vertices.push(G);
+    }
 
 
+    var coloredVertices = new Float32Array(vertices);
+    var n = coloredVertices.length / 6;
+    console.log(n);
 
-    var FSIZE = coloredVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
+    var colouredVertexBuffer = gl.createBuffer();       // bufor kolorowanych wierzcholkow
+    gl.bindBuffer(gl.ARRAY_BUFFER, colouredVertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, coloredVertices, gl.STATIC_DRAW);
 
-    // wyciaganie danych z shadera:
+    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
+    document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
+
     var position = gl.getAttribLocation(gl.program, 'position');
     var color = gl.getAttribLocation(gl.program, 'a_color');
 
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');               // macierz perspektywy
-    document.onkeydown = function(ev){ keydown(ev, gl, N, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
-    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');     // macierz rotacji
-    gl.uniformMatrix4fv(rMatrix, false, identity);
-
-    var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');     // macierz translacji
-    gl.uniformMatrix4fv(tMatrix, false, identity);
-
-    // tworzenie bufora punktow:
-    var floorVertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, floorVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, coloredVertices, gl.STATIC_DRAW);
+    var FSIZE = coloredVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu
 
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 6, 0);
     gl.enableVertexAttribArray(position);
+
     gl.vertexAttribPointer(color, 3, gl.FLOAT, false, FSIZE * 6, FSIZE * 3);
     gl.enableVertexAttribArray(color);
 
-    // rysowanie elementow sceny:
-    gl.drawArrays(gl.TRIANGLES, 0, N);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.enable(gl.DEPTH_TEST);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    // pamietaj aby zmieniac tez funkcje animacji !
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, n/2);
+    gl.drawArrays(gl.TRIANGLE_FAN, n/2, n/2);
 
 
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, sphereN);    // uruchamia animacje elementow sceny
-        requestAnimationFrame(tick);                                            // request that the browser calls tick
+        animate(gl, n, rotMatrix, u_ViewMatrix);   // uruchamiamy animacje piramidy
+        requestAnimationFrame(tick);                // request that the browser calls tick
     };
 
     tick();
