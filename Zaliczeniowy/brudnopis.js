@@ -18,6 +18,7 @@ var FSHADER_SOURCE =
     '}\n';
 
 
+
 var viewMatrix = new Float32Array([
     1, 0, 0, 0,
     0, 1, 0, 0,
@@ -78,7 +79,7 @@ function rotateY(m, angle) {
 var rotMatrix = new Float32Array(16);   // macierz rotacji wokol osi Y
 
 // Animowanie rotacji piramidy wokol osi Y
-function animate(gl, n, rotMatrix, u_ViewMatrix){
+function animate(gl, n, rotMatrix, u_ViewMatrix, upCape, middle, downCape){
     // aktualizacja perspektywy:
     rotateY(viewMatrix, theta);
     rotateX(viewMatrix, phi);
@@ -87,8 +88,9 @@ function animate(gl, n, rotMatrix, u_ViewMatrix){
     phi = 0.0;
 
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, n/2);
-    gl.drawArrays(gl.TRIANGLE_FAN, n/2, n/2);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, upCape);
+    gl.drawArrays(gl.TRIANGLE_FAN, upCape, middle);
+    gl.drawArrays(gl.TRIANGLE_FAN, upCape + middle, downCape);
 }
 
 
@@ -123,26 +125,21 @@ function drawStuff() {
     gl.program = program;
 
     var R = 0.2, G = 0.8, B = 0.2;
-    var xAccuracy = 10;
-    var yAccuracy = 8;
+    var xAccuracy = 10;             // musi byc parzysta!
+    var yAccuracy = 8;              // musi byc parzysta!
     var alpha = 2 * Math.PI / xAccuracy;
     var beta = Math.PI / yAccuracy;
-    var r = 0.5;
+    var bigR = 0.5;
+    var r = bigR;
+    var upCape = 0, middle = 0, downCape = 0;
 
-    var pattern = [0.0, r, 0.0, R, G, B];
-    for(var ip = 0; ip <= xAccuracy; ip++){
-        pattern.push(r * Math.cos(ip * alpha));
-        pattern.push(0.3);
-        pattern.push(r * Math.sin(ip * alpha));
-        pattern.push(R);
-        pattern.push(G);
-        pattern.push(B);
-    }
+    var vertices = [0.0, R, 0.0, R, G, B];
+    upCape++;
 
 
-    var vertices = [0.0, r, 0.0, R, G, B];
     // rysowanie spodu i wierzchu sfery:
     var yindex = 1;
+    r = bigR * Math.cos(beta);
     for(var i = 0; i <= xAccuracy; i++){
         vertices.push(r * Math.cos(i * alpha));
         vertices.push(r * Math.sin(yindex * beta));
@@ -150,16 +147,56 @@ function drawStuff() {
         vertices.push(R);
         vertices.push(G);
         vertices.push(B);
+
+        upCape++;
     }
 
-    vertices.push(0.0, -r, 0.0, G, G, G);
-    for(var i = 0; i <= xAccuracy; i++){
+    var p1x, p1y, p1z;
+    var p2x, p2y, p2z;
+    var p3x, p3y, p3z;
+    var p4x, p4y, p4z;
+    yindex++;
+    for(i = 1; i < yAccuracy; i++){
+        p1x = (r * Math.cos(i * alpha));
+        p1y = (r * Math.sin(yindex * beta));
+        p2z = (r * Math.sin(i * alpha));
+
+        p2x = (r * Math.cos((i + 1) * alpha));
+        p2y = (r * Math.sin(yindex * beta));
+        p2z = (r * Math.sin((i + 1) * alpha));
+
+        p3x = (r * Math.cos(i * alpha));
+        p3y = (r * Math.sin((yindex + 1) * beta));
+        p3z = (r * Math.sin(i * alpha));
+
+        p4x = (r * Math.cos((i + 1) * alpha));
+        p4y = (r * Math.sin((yindex + 1) * beta));
+        p4z = (r * Math.sin((i + 1) * alpha));
+
+        vertices.push(p1x, p1y, p1z, R, G, B);
+        vertices.push(p2x, p2y, p2z, R, G, B);
+        vertices.push(p4x, p4y, p4z, R, G, B);
+
+        vertices.push(p1x, p1y, p1z, R, G, B);
+        vertices.push(p4x, p4y, p4z, R, G, B);
+        vertices.push(p3x, p3y, p3z, R, G, B);
+
+        yindex++;
+        middle++;
+    }
+
+
+    vertices.push(0.0, -R, 0.0, G, G, G);
+    downCape++;
+    for(i = 0; i <= xAccuracy; i++){
         vertices.push(r * Math.cos(i * alpha));
         vertices.push(-r * Math.sin(yindex * beta));
         vertices.push(r * Math.sin(i * alpha));
         vertices.push(G);
         vertices.push(G);
         vertices.push(G);
+
+        downCape++;
     }
 
 
@@ -192,12 +229,13 @@ function drawStuff() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // pamietaj aby zmieniac tez funkcje animacji !
-    gl.drawArrays(gl.TRIANGLE_FAN, 0, n/2);
-    gl.drawArrays(gl.TRIANGLE_FAN, n/2, n/2);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, upCape);
+    gl.drawArrays(gl.TRIANGLE_FAN, upCape, middle);
+    gl.drawArrays(gl.TRIANGLE_FAN, upCape + middle, downCape);
 
 
     var tick = function(){
-        animate(gl, n, rotMatrix, u_ViewMatrix);   // uruchamiamy animacje piramidy
+        animate(gl, n, rotMatrix, u_ViewMatrix, upCape, middle, downCape);   // uruchamiamy animacje piramidy
         requestAnimationFrame(tick);                // request that the browser calls tick
     };
 
