@@ -20,23 +20,44 @@ var VSHADER_SOURCE =
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'uniform sampler2D uSampler;\n' +
-    //'uniform sampler2D uSampler1;\n' +
-    //'uniform sampler2D uSampler2;\n' +
-    //'uniform sampler2D uSampler3;\n' +
+        //'uniform sampler2D uSampler1;\n' +
+        //'uniform sampler2D uSampler2;\n' +
+        //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'void main(){\n' +
-    //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
-    //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
-    //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
+        //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
+        //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
+        //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
     '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
-    //'   gl_FragColor = color2 * color3;\n' + //desperacja t-t
-    //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
-    //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
+        //'   gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
+        //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
+        //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '}\n';
 
 // == Funkcje pomocnicze ==========================================================================
 
+
+var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
+
+// Obsluga klawiszy strzalek
+function keydown(ev){
+    if(ev.keyCode == 38){
+        phi += 0.02;
+    }
+    else if(ev.keyCode == 40){
+        phi -= 0.02;
+    }
+    else if(ev.keyCode == 39){
+        theta += 0.02;
+    }
+    else if(ev.keyCode == 37){
+        theta -= 0.02;
+    }
+}
+
+
 var viewMatrix = new Float32Array(16);  // macierz widoku
+var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
 
 // Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
@@ -86,32 +107,35 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
 }
 
 
-var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
+// Obraca podana macierz w osi X o wskazany kat
+function rotateX(m, angle) {
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+    var mv1 = m[1], mv5 = m[5], mv9 = m[9];
 
-// Obsluga klawiszy strzalek:
-function keydown(ev, gl, n, u_ViewMatrix){
-    if(ev.keyCode == 38){
-        g_eyeY += 0.02;
-    }
-    else if(ev.keyCode == 40){
-        g_eyeY -= 0.02;
-    }
-    else if(ev.keyCode == 39){
-        g_eyeX += 0.02;
-    }
-    else if(ev.keyCode == 37){
-        g_eyeX -= 0.02;
-    }
-    else{
-        return;
-    }
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    m[1] = m[1] * c - m[2] * s;
+    m[5] = m[5] * c - m[6] * s;
+    m[9] = m[9] * c - m[10] * s;
 
-    // rysuje elementy sceny:
-    //gl.drawArrays(gl.TRIANGLES, 0, n);
-    gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_SHORT, 0);
+    m[2] = m[2] * c + mv1 * s;
+    m[6] = m[6] * c + mv5 * s;
+    m[10] = m[10] * c + mv9 * s;
+}
+
+
+// Obraca podana macierz w osi Y o wskazany kat
+function rotateY(m, angle) {
+    var c = Math.cos(angle);
+    var s = Math.sin(angle);
+
+    var mv0 = m[0], mv4 = m[4], mv8 = m[8];
+    m[0] = c * m[0] + s * m[2];
+    m[4] = c * m[4] + s * m[6];
+    m[8] = c * m[8] + s * m[10];
+
+    m[2] = c * m[2] - s * mv0;
+    m[6] = c * m[6] - s * mv4;
+    m[10] = c * m[10] - s * mv8;
 }
 
 
@@ -152,7 +176,7 @@ function setNewRotateMatrix(rotMatrix, angle, axis){
 }
 
 
-var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);   // macierz translacji
 
 // Aktualizuje macierz translacji
 function setNewSphereTranslationMatrix(angle, r){
@@ -176,6 +200,13 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     g_last = now;
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
 
+    // aktualizacja perspektywy:
+    rotateY(viewMatrix, theta);
+    rotateX(viewMatrix, phi);
+    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
+    theta = 0.0;
+    phi = 0.0;
+
     setNewSphereTranslationMatrix(currentAngle, r);             // przesuniecie sfery
     setNewRotateMatrix(rotMatrixSphere, currentAngle, 'X');     // rotacja sfery
     setNewRotateMatrix(rotMatrixCube, currentAngle, 'Y');       // rotacja szescianu
@@ -183,26 +214,19 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, sphereN){
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
-    // aktualizacja perspektywy:
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
-    gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
     // ustawiam wyjsciowa rotacje i rysuje podloze:
     gl.uniformMatrix4fv(tMatrix, false, identity);
     gl.uniformMatrix4fv(rMatrix, false, identity);
-    //gl.drawArrays(gl.TRIANGLES, 0, floorN);
-    gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_SHORT, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     // ustawiam rotacje dla szescianu i go rysuje:
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-    //gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
-    gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_SHORT, floorN);
+    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     // ustawiam wyjsciowa rotacje i rysuje sfere:
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
-    //gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
-    gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_SHORT, floorN + cubeN);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 }
 
 
@@ -220,11 +244,6 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl. RGB, gl.UNSIGNED_BYTE, img);
     gl.uniform1i(u_Sampler, index); // przeniesienie do pamieci
-
-
-    gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 }
 
 
@@ -383,16 +402,14 @@ function drawStuff() {
 
     // tworzenie bufora punktow:
     var vertexBuffer = gl.createBuffer();
-    //gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    //gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
 
 
     // wyciaganie danych z shadera:
 
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');               // macierz perspektywy
-    document.onkeydown = function(ev){ keydown(ev, gl, N, u_ViewMatrix, viewMatrix); }; // uruchamiamy obsluge klawiszy
+    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
+    document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
@@ -420,11 +437,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE0);
 
-    gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_SHORT, 0);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
-
+    gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
@@ -434,11 +447,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE1);
 
-    gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_SHORT, floorN);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
-
+    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
@@ -448,10 +457,7 @@ function drawStuff() {
 
     console.log(gl.TEXTURE2);
 
-    gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_SHORT, floorN + cubeN);
-
-    //gl.clearColor(0,0,0,1);
-    //gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, floorN + cubeN, sphereN);
 
 
     // animowanie sceny:
