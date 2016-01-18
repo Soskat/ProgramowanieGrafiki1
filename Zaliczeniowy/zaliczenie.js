@@ -16,10 +16,12 @@ var VSHADER_SOURCE =
     'uniform mat4 tmatrix;\n'+
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
+    'varying vec3 vView;\n'+
     'void main() {\n' +
-    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
+    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position, 1.0;\n' +
     '   vTexCoord = aTexCoord;\n' +
-    '   vNormal = vec3(tmatrix * rmatrix * vec4(normal, 0.0));\n' +
+    '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
+    //'   vView = vec3( u_ViewMatrix * tmatrix * rmatrix * vec4(position, 1.0) );\n' +
     '}\n';
 
 var FSHADER_SOURCE =
@@ -30,16 +32,17 @@ var FSHADER_SOURCE =
         //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
+    'varying vec3 vView;\n'+
     // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 source_diffuse_color  = vec3(1.0, 2.0, 4.0);\n' +
     'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
-    'const vec3 source_direction      = vec3(0.0, 0.0, 1.0);\n' +
+    'const vec3 source_direction      = vec3(0.0, 0.5, 0.5);\n' +
     // parametry materialu:
-    'const vec3 mat_ambient_color  = vec3(0.3, 0.3, 0.3);\n' +
+    'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
-    'const float shininess         = 10.0;\n' +
+    'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
         //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
         //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
@@ -48,10 +51,16 @@ var FSHADER_SOURCE =
         //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
         //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
-    '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +    // obliczamy czesc ambient oswietlenia
-    '    vec3 I = I_ambient;\n' +
-    //'    gl_FragColor = vec4(I * color, 1.0);\n' +
-    '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
+        // obliczamy elementy oswietlenia:
+    '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
+    '    vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
+    //'    vec3 V = normalize(vView);\n' +
+    //'    vec3 R = reflect(source_direction, vNormal);\n' +
+    //'    vec3 I_specular = source_specular_color * mat_specular_color * pow(max(dot(R, V), 0.0), mat_shininess);\n' +
+    //'    vec3 I = I_ambient + I_diffuse + I_specular;\n' +
+    '    vec3 I = I_ambient + I_diffuse;\n' +
+    '    gl_FragColor = vec4(I * color, 1.0);\n' +
+    //'    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
 
 
@@ -328,8 +337,8 @@ function drawSphere(vertices, bigR, accuracy){
 
         calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
 
-        vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t3x, t3y);
-        vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t4x, t4y);
+        vertices.push(p1x, y1, p1z, Nx, -Ny, Nz, t3x, t3y);
+        vertices.push(p2x, y1, p2z, Nx, -Ny, Nz, t4x, t4y);
 
         upCape += 2;
     }
