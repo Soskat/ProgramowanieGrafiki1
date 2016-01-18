@@ -18,8 +18,8 @@ var VSHADER_SOURCE =
     'varying vec3 vNormal;\n'+
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
-    '   vNormal = vec3(tmatrix * rmatrix * vec4(normal, 0.0));\n' +
     '   vTexCoord = aTexCoord;\n' +
+    '   vNormal = vec3(tmatrix * rmatrix * vec4(normal, 0.0));\n' +
     '}\n';
 
 var FSHADER_SOURCE =
@@ -31,15 +31,15 @@ var FSHADER_SOURCE =
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
     // parametry zrodla swiatla:
-    //'const vec3 source_ambient_color = vec3(1.0, 1.0, 1.0);\n' +
-    //'const vec3 source_diffuse_color = vec3(1.0, 2.0, 4.0);\n' +
-    //'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
-    //'const vec3 source_direction = vec3(0.0, 0.0, 1.0);\n' +
+    'const vec3 source_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
+    'const vec3 source_diffuse_color  = vec3(1.0, 2.0, 4.0);\n' +
+    'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
+    'const vec3 source_direction      = vec3(0.0, 0.0, 1.0);\n' +
     // parametry materialu:
-    //'const vec3 mat_ambient_color = vec3(0.3, 0.3, 0.3);\n' +
-    //'const vec3 mat_diffuse_color = vec3(1.0, 1.0, 1.0);\n' +
-    //'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
-    //'const float shininess = 10.0;\n' +
+    'const vec3 mat_ambient_color  = vec3(0.3, 0.3, 0.3);\n' +
+    'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
+    'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
+    'const float shininess         = 10.0;\n' +
     'void main(){\n' +
         //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
         //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
@@ -47,12 +47,14 @@ var FSHADER_SOURCE =
         //'   gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
         //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
         //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
-    //'    vec3 color = texture2D(uSampler, vTexCoord);\n' +
-    //'    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +    // obliczamy czesc ambient oswietlenia
-    //'    vec3 I = I_ambient;\n' +
-    //'    gl_FragColor = vec3(I * color);\n' +
+    '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
+    '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +    // obliczamy czesc ambient oswietlenia
+    '    vec3 I = I_ambient;\n' +
+    //'    gl_FragColor = vec4(I * color, 1.0);\n' +
     '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
+
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // == Funkcje pomocnicze ===============================================================================================
