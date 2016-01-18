@@ -7,13 +7,16 @@
 
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
+    'attribute vec2 aTexCoord;\n'+
+    'attribute vec3 normal;\n'+
     'uniform mat4 u_ViewMatrix;\n'+
     'uniform mat4 rmatrix;\n'+
     'uniform mat4 tmatrix;\n'+
-    'attribute vec2 aTexCoord;\n'+
     'varying vec2 vTexCoord;\n'+
+    'varying vec3 vNormal;\n'+
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
+    '   vNormal = vec3(tmatrix * rmatrix * vec4(normal, 0.0));\n' +
     '   vTexCoord = aTexCoord;\n' +
     '}\n';
 
@@ -24,14 +27,29 @@ var FSHADER_SOURCE =
         //'uniform sampler2D uSampler2;\n' +
         //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
+    'varying vec3 vNormal;\n'+
+    // parametry zrodla swiatla:
+    //'const vec3 source_ambient_color = vec3(1.0, 1.0, 1.0);\n' +
+    //'const vec3 source_diffuse_color = vec3(1.0, 2.0, 4.0);\n' +
+    //'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
+    //'const vec3 source_direction = vec3(0.0, 0.0, 1.0);\n' +
+    // parametry materialu:
+    //'const vec3 mat_ambient_color = vec3(0.3, 0.3, 0.3);\n' +
+    //'const vec3 mat_diffuse_color = vec3(1.0, 1.0, 1.0);\n' +
+    //'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
+    //'const float shininess = 10.0;\n' +
     'void main(){\n' +
         //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
         //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
         //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
-    '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
         //'   gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
         //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
         //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
+    //'    vec3 color = texture2D(uSampler, vTexCoord);\n' +
+    //'    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +    // obliczamy czesc ambient oswietlenia
+    //'    vec3 I = I_ambient;\n' +
+    //'    gl_FragColor = vec3(I * color);\n' +
+    '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
 
 // == Funkcje pomocnicze ==========================================================================
@@ -254,6 +272,25 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 
 
 
+function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
+    // U = p2 - p1
+    var Ux = p2x - p1x;
+    var Uy = p2y - p1y;
+    var Uz = p2z - p1z;
+
+    // V = p3 - p1
+    var Vx = p3x - p1x;
+    var Vy = p3y - p1y;
+    var Vz = p3z - p1z;
+
+    var Nx = Uy * Vz - Uz * Vy;
+    var Ny = Uz * Vx - Ux * Vz;
+    var Nz = Ux * Vy - Uy * Vx;
+
+    return [Nx, Ny, Nz];
+}
+
+
 var bigR = 0.2;                             // promien sfery
 var accuracy = 10;                          // dokladnosc modelu sfery
 var upCape = 0, middle = 0, downCape = 0;   // liczniki wierzcholkow spodow i ciala sfery
@@ -265,7 +302,7 @@ function drawSphere(vertices, bigR, accuracy){
     var i = 1, j;                                   // indeksy
     var r1, r2;                                     // promienie dwoch wycinkow sfery
     var y1, y2;                                     // wspolrzedne Y dwoch poziomow punktow
-    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych:
+    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych
     // wierzcholki tekstury:
     var t0x = 0.5, t0y = 0.0;
     var t1x = 0.0, t1y = 0.0;
@@ -283,6 +320,7 @@ function drawSphere(vertices, bigR, accuracy){
         vertices.push(r1 * Math.cos(j * alpha));
         vertices.push(y1);
         vertices.push(r1 * Math.sin(j * alpha));
+
         if(j % 2 == 0){
             vertices.push(t3x, t3y);
         }
@@ -343,6 +381,26 @@ function drawSphere(vertices, bigR, accuracy){
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // == Program glowny ==============================================================================
 
 // Rysuje rzeczy w Canvasie:
@@ -366,6 +424,8 @@ function drawStuff() {
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, VSHADER_SOURCE);
     gl.compileShader(vertexShader);
+
+    console.log(pixelShader);
 
     var program = gl.createProgram();
 
@@ -443,7 +503,32 @@ function drawStuff() {
 
     vertices = drawSphere(vertices, bigR, accuracy);
 
-    var texturedVertices = new Float32Array(vertices);
+    // dokladanie wspolrzednych wektorow normalnych:
+    var Faces = vertices.length / (5 * 3);  // ilosc scian
+    var counter = 0;
+    var temp = [];
+    var N = [];
+    var finalVertices = [];
+    for(var i = 0; i < Faces; i++){
+        // pobieram trzy wierzcholki
+        for(var j = 0; j < 5 * 3; j++, counter++){
+            temp += vertices[counter];
+        }
+        // obliczam wektor normalny dla pobranych wierzcholkow:
+        N = calculateNormal([temp[0], temp[1], temp[2], temp[5], temp[6], temp[7], temp[8], temp[10], temp[11], temp[12]]);
+        // wrzucam caly zestaw punktow wierzcholkow do listy:
+        finalVertices.push(temp[0],  temp[1],  temp[2],   N[0], N[1], N[2],  temp[3],  temp[4]);
+        finalVertices.push(temp[5],  temp[6],  temp[7],   N[0], N[1], N[2],  temp[8],  temp[9]);
+        finalVertices.push(temp[10], temp[11], temp[12],  N[0], N[1], N[2],  temp[13], temp[14]);
+
+    }
+
+    console.log('Faces =', Faces);
+    console.log('vertices =', Faces * 3);
+    console.log('vertices.length =', vertices.length);
+    console.log('counter =', counter);
+
+    var texturedVertices = new Float32Array(finalVertices);
 
     var FSIZE = texturedVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
 
@@ -475,8 +560,12 @@ function drawStuff() {
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 5, 0);
     gl.enableVertexAttribArray(position);
 
+    var normal = gl.getAttribLocation(gl.program, 'normal');
+    gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
+    gl.enableVertexAttribArray(normal);
+
     var a_TextCoord = gl.getAttribLocation(gl.program, 'aTexCoord');
-    gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
+    gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 6);
     gl.enableVertexAttribArray(a_TextCoord);
 
 
@@ -487,7 +576,7 @@ function drawStuff() {
     floorImg.src = "basketStyle.jpg";
     floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, floor_u_Sampler, 0, floorImg); };
 
-    console.log(gl.TEXTURE0);
+    //console.log(gl.TEXTURE0);
 
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
@@ -498,7 +587,7 @@ function drawStuff() {
     cubeImg.src = "differentWalls.jpg";
     cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, cube_u_Sampler, 1, cubeImg); };
 
-    console.log(gl.TEXTURE1);
+    //console.log(gl.TEXTURE1);
 
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
@@ -509,7 +598,7 @@ function drawStuff() {
     sphereImg.src = "cracked.jpg";
     sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, sphere_u_Sampler, 2, sphereImg); };
 
-    console.log(gl.TEXTURE2);
+    //console.log(gl.TEXTURE2);
 
     gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
     gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
