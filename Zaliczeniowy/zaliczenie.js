@@ -275,6 +275,8 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 }
 
 
+var Nx = 0.0, Ny = 0.0, Nz = 0.0;
+
 // Oblicza wektor normalny dla podanej powierzchni (trojki punktow):
 function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
     // U = p2 - p1
@@ -287,11 +289,9 @@ function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
     var Vy = p3y - p1y;
     var Vz = p3z - p1z;
 
-    var Nx = Uy * Vz - Uz * Vy;
-    var Ny = Uz * Vx - Ux * Vz;
-    var Nz = Ux * Vy - Uy * Vx;
-
-    return [Nx, Ny, Nz];
+    Nx = Uy * Vz - Uz * Vy;
+    Ny = Uz * Vx - Ux * Vz;
+    Nz = Ux * Vy - Uy * Vx;
 }
 
 
@@ -318,20 +318,20 @@ function drawSphere(vertices, bigR, accuracy){
     y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
 
     // rysujemy wierzch sfery:
-    vertices.push(0.0, bigR, 0.0, t0x, t0y);
+    vertices.push(0.0, bigR, 0.0,  0.0, 1.0, 0.0,  t0x, t0y);
     upCape++;
-    for(j = 0; j <= accuracy; j++){
-        vertices.push(r1 * Math.cos(j * alpha));
-        vertices.push(y1);
-        vertices.push(r1 * Math.sin(j * alpha));
+    for(j = 0; j <= accuracy; j += 2){
+        p1x = r1 * Math.cos(j * alpha);
+        p1z = r1 * Math.sin(j * alpha);
+        p2x = r1 * Math.cos((j + 1) * alpha);
+        p2z = r1 * Math.sin((j + 1) * alpha);
 
-        if(j % 2 == 0){
-            vertices.push(t3x, t3y);
-        }
-        else{
-            vertices.push(t4x, t4y);
-        }
-        upCape++;
+        calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
+
+        vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t3x, t3y);
+        vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t4x, t4y);
+
+        upCape += 2;
     }
 
     for(i; i <= accuracy; i++){
@@ -353,32 +353,35 @@ function drawSphere(vertices, bigR, accuracy){
             p4x = r2 * Math.cos((j + 1) * alpha);
             p4z = r2 * Math.sin((j + 1) * alpha);
 
-            // wsadzamy punktu do tablicy:
-            vertices.push(p1x, y1, p1z, t1x, t1y);
-            vertices.push(p2x, y1, p2z, t2x, t2y);
-            vertices.push(p4x, y2, p4z, t4x, t4y);
-            vertices.push(p4x, y2, p4z, t4x, t4y);
-            vertices.push(p3x, y2, p3z, t3x, t3y);
-            vertices.push(p1x, y1, p1z, t1x, t1y);
+            // wsadzamy punkty do tablicy:
+            calculateNormal(p1x, y1, p1z, p2x, y1, p2z, p4x, y2, p4z);
+            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
+            vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t2x, t2y);
+            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
+            calculateNormal(p4x, y2, p4z, p3x, y2, p3z, p1x, y1, p1z);
+            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
+            vertices.push(p3x, y2, p3z, Nx, Ny, Nz, t3x, t3y);
+            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
 
             middle += 6;
         }
     }
 
     // rysujemy spod sfery:
-    vertices.push(0.0, -bigR, 0.0, t0x, t0y);
+    vertices.push(0.0, -bigR, 0.0,  0.0, -1.0, 0.0,  t0x, t0y);
     downCape++;
-    for(j = 0; j <= accuracy; j++){
-        vertices.push(r1 * Math.cos(j * alpha));
-        vertices.push(-y1);
-        vertices.push(r1 * Math.sin(j * alpha));
-        if(j % 2 == 0){
-            vertices.push(t3x, t3y);
-        }
-        else{
-            vertices.push(t4x, t4y);
-        }
-        downCape++;
+    for(j = 0; j <= accuracy; j += 2){
+        p1x = r1 * Math.cos(j * alpha);
+        p1z = r1 * Math.sin(j * alpha);
+        p2x = r1 * Math.cos((j + 1) * alpha);
+        p2z = r1 * Math.sin((j + 1) * alpha);
+
+        calculateNormal(0.0, -bigR, 0.0, p1x, -y1, p1z, p2x, -y1, p2z);
+
+        vertices.push(p1x, -y1, p1z, Nx, Ny, Nz, t3x, t3y);
+        vertices.push(p2x, -y1, p2z, Nx, Ny, Nz, t4x, t4y);
+
+        downCape += 2;
     }
 
     return vertices;
@@ -433,90 +436,66 @@ function drawStuff() {
 
     // tworzenie listy punktow: ========================================================================================
     var vertices = [
-        // wspolrz.:     // wspolrz. tekstury:
-        -0.5, -0.5, -0.5,   0.25, 0.25,
-        -0.5, -0.5,  0.5,   0.25, 0.5,
-         0.5, -0.5, -0.5,   0.5,  0.25,
-         0.5, -0.5, -0.5,   0.5,  0.25,
-        -0.5, -0.5,  0.5,   0.25, 0.5,
-         0.5, -0.5,  0.5,   0.5,  0.5
+        // wspolrz.:         // normalne      // wspolrz. tekstury:
+        -0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.25, 0.25,
+        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.25, 0.5,
+         0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.5,  0.25,
+         0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.5,  0.25,
+        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.25, 0.5,
+         0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.5,  0.5
     ];
-    var floorN = vertices.length / 5;
+    var floorN = vertices.length / 8;
+
 
     vertices.push(
-        // wspolrz.:     // wspolrz. tekstury:
-        -0.1, -0.1,  0.1,   0.5,  0.5,
-         0.1, -0.1,  0.1,   1.0,  0.5,
-        -0.1, -0.1, -0.1,   0.5,  0.75,
-        -0.1, -0.1, -0.1,   0.5,  0.75,
-         0.1, -0.1,  0.1,   1.0,  0.5,
-         0.1, -0.1, -0.1,   1.0,  0.75,
+        // wspolrz.:         // normalne      // wspolrz. tekstury:
+        -0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    0.5,  0.5,
+         0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
+        -0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    0.5,  0.75,
+        -0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    0.5,  0.75,
+         0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
+         0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    1.0,  0.75,
 
-        -0.1, -0.1, -0.1,   0.5,  0.0,
-         0.1, -0.1, -0.1,   1.0,  0.0,
-        -0.1,  0.1, -0.1,   0.5,  0.25,
-        -0.1,  0.1, -0.1,   0.5,  0.25,
-         0.1, -0.1, -0.1,   1.0,  0.0,
-         0.1,  0.1, -0.1,   1.0,  0.25,
+        -0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.0,
+         0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
+        -0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.25,
+        -0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.25,
+         0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
+         0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.25,
 
-        -0.1, -0.1,  0.1,   0.0,  0.5,
-        -0.1, -0.1, -0.1,   0.0,  0.25,
-        -0.1,  0.1,  0.1,   0.5,  0.5,
-        -0.1,  0.1,  0.1,   0.5,  0.5,
-        -0.1, -0.1, -0.1,   0.0,  0.25,
-        -0.1,  0.1, -0.1,   0.5,  0.25,
+        -0.1, -0.1,  0.1,   -1.0,  0.0,  0.0,    0.0,  0.5,
+        -0.1, -0.1, -0.1,   -1.0,  0.0,  0.0,    0.0,  0.25,
+        -0.1,  0.1,  0.1,   -1.0,  0.0,  0.0,    0.5,  0.5,
+        -0.1,  0.1,  0.1,   -1.0,  0.0,  0.0,    0.5,  0.5,
+        -0.1, -0.1, -0.1,   -1.0,  0.0,  0.0,    0.0,  0.25,
+        -0.1,  0.1, -0.1,   -1.0,  0.0,  0.0,    0.5,  0.25,
 
-        -0.1, -0.1,  0.1,   0.0,  0.25,
-         0.1, -0.1,  0.1,   0.5,  0.25,
-        -0.1,  0.1,  0.1,   0.0,  0.0,
-        -0.1,  0.1,  0.1,   0.0,  0.0,
-         0.1, -0.1,  0.1,   0.5,  0.25,
-         0.1,  0.1,  0.1,   0.5,  0.0,
+        -0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.25,
+         0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
+        -0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.0,
+        -0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.0,
+         0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
+         0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.0,
 
-         0.1, -0.1,  0.1,   1.0,  0.5,
-         0.1,  0.1,  0.1,   0.5,  0.5,
-         0.1, -0.1, -0.1,   1.0,  0.25,
-         0.1, -0.1, -0.1,   1.0,  0.25,
-         0.1,  0.1,  0.1,   0.5,  0.5,
-         0.1,  0.1, -0.1,   0.5,  0.25,
+         0.1, -0.1,  0.1,    1.0,  0.0,  0.0,    1.0,  0.5,
+         0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
+         0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
+         0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
+         0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
+         0.1,  0.1, -0.1,    1.0,  0.0,  0.0,    0.5,  0.25,
 
-         0.1,  0.1,  0.1,   0.5,  0.75,
-         0.1,  0.1, -0.1,   0.5,  0.5,
-        -0.1,  0.1,  0.1,   0.0,  0.75,
-        -0.1,  0.1,  0.1,   0.0,  0.75,
-         0.1,  0.1, -0.1,   0.5,  0.5,
-        -0.1,  0.1, -0.1,   0.0,  0.5
+         0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.5,  0.75,
+         0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
+        -0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.0,  0.75,
+        -0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.0,  0.75,
+         0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
+        -0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.0,  0.5
     );
-    var cubeN = (vertices.length / 5) - floorN;
+    var cubeN = (vertices.length / 8) - floorN;
 
     vertices = drawSphere(vertices, bigR, accuracy);
 
-    // dokladanie wspolrzednych wektorow normalnych:
-    var Faces = vertices.length / (5 * 3);  // ilosc scian
-    var counter = 0;
-    var temp = [];
-    var N = [];
-    var finalVertices = [];
-    for(var i = 0; i < Faces; i++){
-        // pobieram trzy wierzcholki
-        for(var j = 0; j < 5 * 3; j++, counter++){
-            temp += vertices[counter];
-        }
-        // obliczam wektor normalny dla pobranych wierzcholkow:
-        N = calculateNormal([temp[0], temp[1], temp[2], temp[5], temp[6], temp[7], temp[8], temp[10], temp[11], temp[12]]);
-        // wrzucam caly zestaw punktow wierzcholkow do listy:
-        finalVertices.push(temp[0],  temp[1],  temp[2],   N[0], N[1], N[2],  temp[3],  temp[4]);
-        finalVertices.push(temp[5],  temp[6],  temp[7],   N[0], N[1], N[2],  temp[8],  temp[9]);
-        finalVertices.push(temp[10], temp[11], temp[12],  N[0], N[1], N[2],  temp[13], temp[14]);
-
-    }
-
-    //console.log('Faces =', Faces);
-    //console.log('vertices =', Faces * 3);
-    //console.log('vertices.length =', vertices.length);
-    //console.log('counter =', counter);
-
-    var texturedVertices = new Float32Array(finalVertices);
+    var texturedVertices = new Float32Array(vertices);
 
     var FSIZE = texturedVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
 
@@ -545,15 +524,15 @@ function drawStuff() {
     gl.uniformMatrix4fv(tMatrix, false, identity);
 
     var position = gl.getAttribLocation(gl.program, 'position');
-    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 5, 0);
+    gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 8, 0);
     gl.enableVertexAttribArray(position);
 
     var normal = gl.getAttribLocation(gl.program, 'normal');
-    gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
+    gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
     gl.enableVertexAttribArray(normal);
 
     var a_TextCoord = gl.getAttribLocation(gl.program, 'aTexCoord');
-    gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 6);
+    gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 6);
     gl.enableVertexAttribArray(a_TextCoord);
 
 
