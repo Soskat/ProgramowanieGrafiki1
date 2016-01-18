@@ -3,7 +3,9 @@
  */
 
 
-// == Programy shaderow ===========================================================================
+// ---------------------------------------------------------------------------------------------------------------------
+// == Programy shaderow ================================================================================================
+// ---------------------------------------------------------------------------------------------------------------------
 
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
@@ -52,7 +54,9 @@ var FSHADER_SOURCE =
     '    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
 
-// == Funkcje pomocnicze ==========================================================================
+// ---------------------------------------------------------------------------------------------------------------------
+// == Funkcje pomocnicze ===============================================================================================
+// ---------------------------------------------------------------------------------------------------------------------
 
 
 var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
@@ -269,9 +273,7 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 }
 
 
-
-
-
+// Oblicza wektor normalny dla podanej powierzchni (trojki punktow):
 function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
     // U = p2 - p1
     var Ux = p2x - p1x;
@@ -382,30 +384,13 @@ function drawSphere(vertices, bigR, accuracy){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// == Program glowny ==============================================================================
+// ---------------------------------------------------------------------------------------------------------------------
+// == Program glowny ===================================================================================================
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Rysuje rzeczy w Canvasie:
 function drawStuff() {
-    // /ladowanie shaderow do programu
+    // ladowanie shaderow do programu: =================================================================================
     var canvas = document.getElementById('MyFirstCanvas');
     var gl = canvas.getContext("webgl");
     console.log(gl);
@@ -444,6 +429,7 @@ function drawStuff() {
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
 
+    // tworzenie listy punktow: ========================================================================================
     var vertices = [
         // wspolrz.:     // wspolrz. tekstury:
         -0.5, -0.5, -0.5,   0.25, 0.25,
@@ -523,28 +509,28 @@ function drawStuff() {
 
     }
 
-    console.log('Faces =', Faces);
-    console.log('vertices =', Faces * 3);
-    console.log('vertices.length =', vertices.length);
-    console.log('counter =', counter);
+    //console.log('Faces =', Faces);
+    //console.log('vertices =', Faces * 3);
+    //console.log('vertices.length =', vertices.length);
+    //console.log('counter =', counter);
 
     var texturedVertices = new Float32Array(finalVertices);
 
     var FSIZE = texturedVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
 
 
-    // tworzenie bufora tekstury:
+    // tworzenie bufora tekstury: ======================================================================================
     var textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturedVertices), gl.STATIC_DRAW);
 
-    // tworzenie bufora punktow:
+    // tworzenie bufora punktow: =======================================================================================
     var vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
 
 
-    // wyciaganie danych z shadera:
+    // wyciaganie danych z shadera: ====================================================================================
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
     document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
     setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
@@ -569,7 +555,7 @@ function drawStuff() {
     gl.enableVertexAttribArray(a_TextCoord);
 
 
-    // tworzenie tekstur (i rysowanie elementow sceny):
+    // tworzenie tekstur (i rysowanie elementow sceny): ================================================================
     var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
@@ -605,7 +591,7 @@ function drawStuff() {
     gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 
 
-    // animowanie sceny:
+    // animowanie sceny: ===============================================================================================
     var tick = function(){
         animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, upCape, middle, downCape);  // uruchamia animacje elementow sceny
         requestAnimationFrame(tick);                                                                // request that the browser calls tick
