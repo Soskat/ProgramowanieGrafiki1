@@ -18,9 +18,10 @@ var VSHADER_SOURCE =
     'varying vec3 vNormal;\n'+
     'varying vec3 vView;\n'+
     'void main() {\n' +
-    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position, 1.0;\n' +
+    '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
     '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
+    '   vView = vec3(gl_Position);\n' +
     //'   vView = vec3( u_ViewMatrix * tmatrix * rmatrix * vec4(position, 1.0) );\n' +
     '}\n';
 
@@ -54,11 +55,10 @@ var FSHADER_SOURCE =
         // obliczamy elementy oswietlenia:
     '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
     '    vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
-    //'    vec3 V = normalize(vView);\n' +
-    //'    vec3 R = reflect(source_direction, vNormal);\n' +
-    //'    vec3 I_specular = source_specular_color * mat_specular_color * pow(max(dot(R, V), 0.0), mat_shininess);\n' +
-    //'    vec3 I = I_ambient + I_diffuse + I_specular;\n' +
-    '    vec3 I = I_ambient + I_diffuse;\n' +
+    '    vec3 V = normalize(vView);\n' +
+    '    vec3 R = reflect(source_direction, vNormal);\n' +
+    '    vec3 I_specular = source_specular_color * mat_specular_color * pow(max(dot(R, V), 0.0), mat_shininess);\n' +
+    '    vec3 I = I_ambient + I_diffuse + I_specular;\n' +
     '    gl_FragColor = vec4(I * color, 1.0);\n' +
     //'    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
