@@ -20,22 +20,19 @@ var VSHADER_SOURCE =
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
-    //'   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
-    '   vNormal = normal;\n' +
+    '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
+    //'   vNormal = normal;\n' +
     //'   vView = vec3(gl_Position);\n' +
     '}\n';
 
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'uniform sampler2D uSampler;\n' +
-        //'uniform sampler2D uSampler1;\n' +
-        //'uniform sampler2D uSampler2;\n' +
-        //'uniform sampler2D uSampler3;\n' +
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
     //'varying vec3 vView;\n'+
     // parametry zrodla swiatla:
-    'const vec3 source_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
+    'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.0, 2.0, 4.0);\n' +
     'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
@@ -45,12 +42,6 @@ var FSHADER_SOURCE =
     'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
-        //'    vec4 color1 = texture2D(uSampler1, vTexCoord);\n' +
-        //'    vec4 color2 = texture2D(uSampler2, vTexCoord);\n' +
-        //'    vec4 color3 = texture2D(uSampler3, vTexCoord);\n' +
-        //'   gl_FragColor = color1 * color2 * color3;\n' + //desperacja t-t
-        //'   gl_FragColor = texture2D(uSampler2, vTexCoord);\n' + //tekstura 2.
-        //'   gl_FragColor = texture2D(uSampler3, vTexCoord);\n' + //tekstura 3.
     '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
         // obliczamy elementy oswietlenia:
     '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
@@ -229,7 +220,7 @@ var g_last = Date.now();
 var currentAngle = 0.0;
 
 // Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, middle, downCape){
+function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, middle, downCape, u_Sampler){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
@@ -251,15 +242,18 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, m
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
 
     // ustawiam wyjsciowa rotacje i rysuje podloze:
+    gl.uniform1i(u_Sampler, 0);
     gl.uniformMatrix4fv(tMatrix, false, identity);
     gl.uniformMatrix4fv(rMatrix, false, identity);
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
     // ustawiam rotacje dla szescianu i go rysuje:
+    gl.uniform1i(u_Sampler, 1);
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
     // ustawiam wyjsciowa rotacje i rysuje sfere:
+    gl.uniform1i(u_Sampler, 2);
     gl.uniformMatrix4fv(tMatrix, false, transMatrix);
     gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
     gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
@@ -546,37 +540,43 @@ function drawStuff() {
     gl.enableVertexAttribArray(a_TextCoord);
 
 
+    var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+
+
     // tworzenie tekstur (i rysowanie elementow sceny): ================================================================
-    var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+    //var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
     floorImg.src = "basketStyle.jpg";
-    floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, floor_u_Sampler, 0, floorImg); };
+    floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, u_Sampler, 0, floorImg); };
 
     //console.log(gl.TEXTURE0);
 
+    gl.uniform1i(u_Sampler, 0);
     gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
 
-    var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+    //var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
     cubeImg.src = "differentWalls.jpg";
-    cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, cube_u_Sampler, 1, cubeImg); };
+    cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, u_Sampler, 1, cubeImg); };
 
     //console.log(gl.TEXTURE1);
 
+    gl.uniform1i(u_Sampler, 1);
     gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
 
-    var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+    //var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
     var sphereImg = new Image();
     sphereImg.src = "cracked.jpg";
-    sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, sphere_u_Sampler, 2, sphereImg); };
+    sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, u_Sampler, 2, sphereImg); };
 
     //console.log(gl.TEXTURE2);
 
+    gl.uniform1i(u_Sampler, 2);
     gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
     gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
     gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
