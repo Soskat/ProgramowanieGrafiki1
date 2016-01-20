@@ -36,6 +36,11 @@ var FSHADER_SOURCE =
     '  gl_FragColor = v_Color;\n' +
     '}\n';
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// == Funkcje pomocnicze ===============================================================================================
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Rotation angle (degrees/second)
 var ANGLE_STEP = 10.0;
 // Last time that this function was called
@@ -64,8 +69,7 @@ function transpose(matrix) {
     t = e[11];  e[11] = e[14];  e[14] = t;
 
     return e;
-};
-
+}
 
 function setInverseOf(matrix) {
     var i, s, d, inv, det;
@@ -121,7 +125,7 @@ function setInverseOf(matrix) {
     }
 
     return inv;
-};
+}
 
 function setRotate(angle, x, y, z) {
     var matrix, s, c, len, rlen, nc, xy, yz, zx, xs, ys, zs;
@@ -198,8 +202,7 @@ function setRotate(angle, x, y, z) {
     }
 
     return matrix;
-};
-
+}
 
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
@@ -259,7 +262,6 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ) {
     return viewMatrix;
 }
 
-
 function setPerspective(fovy, aspect, near, far) {
     var  rd, s, ct;
 
@@ -306,28 +308,7 @@ function setPerspective(fovy, aspect, near, far) {
     viewMatrix[15] = 0;
 
     return viewMatrix;
-};
-
-
-
-function normalize(vector) {
-    var v = vector
-    var c = v[0], d = v[1], e = v[2], g = Math.sqrt(c * c + d * d + e * e);
-    if (g) {
-        if (g == 1)
-            return this;
-    } else {
-        v[0] = 0;
-        v[1] = 0;
-        v[2] = 0;
-        return this;
-    }
-    g = 1 / g;
-    v[0] = c * g;
-    v[1] = d * g;
-    v[2] = e * g;
-    return v;
-};
+}
 
 function concat(a,b) {
     var i, e, ai0, ai1, ai2, ai3;
@@ -349,8 +330,12 @@ function concat(a,b) {
         e[i + 12] = ai0 * b[12] + ai1 * b[13] + ai2 * b[14] + ai3 * b[15];
     }
     return e;
-};
+}
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// == Funkcja glowna ===================================================================================================
+// ---------------------------------------------------------------------------------------------------------------------
 function drawTriangle() {
     var canvas = document.getElementById('example');
 
@@ -495,18 +480,12 @@ function drawTriangle() {
         currentAngle = animate(currentAngle);  // Update the rotation angle
 
         var modelMatrix = setRotate(currentAngle, 0, 1, 0); // Rotate around the y-axis
-        // Pass the model matrix to u_ModelMatrix
-        //console.log(modelMatrix);
-        //gl.uniformMatrix4fv(u_ModelMatrix, false, modelMatrix);
 
         // Pass the model view projection matrix to u_MvpMatrix
         viewMatrix = concat(vMatrix,modelMatrix);
-        console.log(vMatrix);
+        //console.log(vMatrix);
         gl.uniformMatrix4fv(u_MvpMatrix, false, viewMatrix);
 
-        // Pass the matrix to transform the normal based on the model matrix to u_NormalMatrix
-        //var c = setInverseOf(modelMatrix);
-        //var d = transpose(c);
         normalMatrix = transpose(setInverseOf(modelMatrix));
         gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix);
 
@@ -519,21 +498,4 @@ function drawTriangle() {
         requestAnimationFrame(tick, canvas); // Request that the browser ?calls tick
     };
     tick();
-    //// Calculate the view projection matrix
-    //var a =setPerspective(30, canvas.width/canvas.height, 1, 100);
-    //var b =setLookAt(3, 3, 7, 0, 0, 0, 0, 1, 0);
-    //var viewMatrix=concat(setPerspective(30, canvas.width/canvas.height, 1, 100),setLookAt(3, 3, 7, 0, 0, 0, 0, 1, 0));
-    //var mat = new Float32Array([
-    //    3.4302961826324463,-0.5388137102127075,-0.3739125430583954,-0.3665083348751068,
-    //    0,3.472355365753174,-0.3739125430583954,-0.3665083348751068,
-    //    -1.4701268672943115,-1.2572320699691772,-0.8724626302719116,-0.8551861047744751,0.0004,
-    //    0.0005, 6.330511093139648,8.185352325439453]);
-    //// Pass the model view projection matrix to the variable u_MvpMatrix
-    //gl.uniformMatrix4fv(u_MvpMatrix, false, viewMatrix);
-    //
-    //// Clear color and depth buffer
-    //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    //
-    //// Draw the cube
-    //gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_BYTE, 0);
 }
