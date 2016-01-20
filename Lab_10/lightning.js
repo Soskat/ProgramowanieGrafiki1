@@ -2,7 +2,6 @@
  * Created by Louve on 19.12.2015.
  */
 
-
 var VSHADER_SOURCE =
     'attribute vec4 position;\n'+
     'attribute vec2 aTexCoord;\n'+
