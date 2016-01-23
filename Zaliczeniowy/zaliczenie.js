@@ -14,9 +14,18 @@ var VSHADER_SOURCE =
     'uniform mat4 u_ViewMatrix;\n'+
     'uniform mat4 rmatrix;\n'+
     'uniform mat4 tmatrix;\n'+
+    'uniform mat4 lmatrix;\n' +
+    'uniform mat4 pmatrixLight;\n' +
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
+    'varying vec3 vLightPos;\n' +
     'void main() {\n' +
+
+    //'   vec4 lightPos = lmatrix * vec4(position, 1.0);\n' +
+    //'   lightPos = pmatrixLight * lightPos;\n' +
+    //'   vec3 lightPosDNC = lightPos.xyz / lightPos.w;\n' +
+    //'   vLightPos = vec3(0.5, 0.5, 0.5) + lightPosDNC * 0.5;\n' +
+
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
     '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
@@ -25,8 +34,10 @@ var VSHADER_SOURCE =
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'uniform sampler2D uSampler;\n' +
+    'uniform sampler2D uSamplerShadow;\n' +
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
+    'varying vec3 vLightPos;\n' +
     // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.5, 1.5, 1.5);\n' +
@@ -37,6 +48,18 @@ var FSHADER_SOURCE =
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
+
+
+    //'   vec2 uv_shadowMap = vLightPos.xy;\n' +
+    //'   vec4 shadowMapColor = texture2D(samplerShadowMap, uv_shadowMap);\n' +
+    //'   float zShadowMap = shadowMapColor.r;\n' +
+    //'   gl_FragColor = vec4(zShadowMap, 0.0, 0.0, 1.0);\n' +
+
+
+    //'   return;\n' +        // DEBUG
+
+
+
     '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
         // obliczamy elementy oswietlenia:
     '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
@@ -454,9 +477,10 @@ function drawStuff() {
 
     gl.linkProgram(program_shadow);
 
-    var u_ViewMatrixShadow = gl.getUniformLocation(program_shadow, "u_ViewMatrix");
-    var lightMatrix = gl.getUniformLocation(program_shadow, "lmatrix");
-    var positionShadow = gl.getAttribLocation(program_shadow, "position");
+    // wyciaganie danych z shadera:
+    var positionShadow      = gl.getAttribLocation(program_shadow, "position");
+    var u_ViewMatrixShadow  = gl.getUniformLocation(program_shadow, "u_ViewMatrix");
+    var lightMatrix         = gl.getUniformLocation(program_shadow, "lmatrix");
 
 
     // glowny program: ------------------------------------------------------------
@@ -468,13 +492,25 @@ function drawStuff() {
     gl.shaderSource(pixelShader, FSHADER_SOURCE);
     gl.compileShader(pixelShader);
 
-    //console.log(pixelShader);
-
     var program = gl.createProgram();
 
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, pixelShader);
     gl.linkProgram(program);
+
+    // wyciaganie danych z shadera:
+    var position            = gl.getAttribLocation(program, 'position');
+    var a_TextCoord         = gl.getAttribLocation(program, 'aTexCoord');
+    var normal              = gl.getAttribLocation(program, 'normal');
+    var u_ViewMatrix        = gl.getUniformLocation(program, 'u_ViewMatrix');   // macierz perspektywy
+    var rMatrix             = gl.getUniformLocation(program, 'rmatrix');        // macierz rotacji
+    var tMatrix             = gl.getUniformLocation(program, 'tmatrix');        // macierz translacji
+    var _Lmatrix            = gl.getUniformLocation(program, "lmatrix");
+    var _PmatrixLight       = gl.getUniformLocation(program, "pmatrixLight");
+    var _lightDirection     = gl.getUniformLocation(program, "source_direction");
+    var u_Sampler           = gl.getUniformLocation(program, 'uSampler');
+    var _samplerShadowMap   = gl.getUniformLocation(program, "samplerShadowMap");
+
 
     gl.useProgram(program);
     gl.program = program;
@@ -564,39 +600,22 @@ function drawStuff() {
     gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
 
 
-    // wyciaganie danych z shadera: ====================================================================================
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
+    // aktualizowanie danych z shadera: ================================================================================
     document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
     setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
-    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');     // macierz rotacji
     gl.uniformMatrix4fv(rMatrix, false, identity);
-
-    var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');     // macierz translacji
     gl.uniformMatrix4fv(tMatrix, false, identity);
-
-    var position = gl.getAttribLocation(gl.program, 'position');
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 8, 0);
-
-    var normal = gl.getAttribLocation(gl.program, 'normal');
     gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
-
-    var a_TextCoord = gl.getAttribLocation(gl.program, 'aTexCoord');
     gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 6);
 
-
-
-
-    var _lightDirection = gl.getUniformLocation(gl.program, "source_direction");
     var LIGHTDIR = [0.58, 0.58, -0.58];
     gl.uniform3fv(_lightDirection, LIGHTDIR);
+    gl.uniform1i(_samplerShadowMap, 1);
 
-
-
-
-
-    var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+    var PROJMATRIX_SHADOW = get_projection_ortho(20, 1, 5, 28);
+    var LIGHTMATRIX = lookAtDir(LIGHTDIR, [0,1,0], [0,0,0]);
 
 
     // tworzenie tekstur (i rysowanie elementow sceny): ================================================================
@@ -620,8 +639,6 @@ function drawStuff() {
 
 
 
-    var PROJMATRIX_SHADOW = get_projection_ortho(20, 1, 5, 28);
-    var LIGHTMATRIX = lookAtDir(LIGHTDIR, [0,1,0], [0,0,0]);
 
 
 
@@ -646,14 +663,13 @@ function drawStuff() {
 
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture_rtt, 0);
 
-
     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
 
 
-
-
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, texture_rtt);
 
 
 
@@ -698,6 +714,13 @@ function drawStuff() {
         gl.enableVertexAttribArray(position);
         gl.enableVertexAttribArray(normal);
         gl.enableVertexAttribArray(a_TextCoord);
+
+
+
+        gl.uniformMatrix4fv(_PmatrixLight, false, PROJMATRIX_SHADOW);
+        gl.uniformMatrix4fv(_Lmatrix, false, LIGHTMATRIX);
+
+
 
         // ustawiam wyjsciowa rotacje i rysuje podloze:
         gl.uniform1i(u_Sampler, 0);
