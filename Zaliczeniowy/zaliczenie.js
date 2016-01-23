@@ -30,7 +30,8 @@ var FSHADER_SOURCE =
     // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.5, 1.5, 1.5);\n' +
-    'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
+    'uniform vec3 source_direction;\n' +
+    //'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
     // parametry materialu:
     'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
@@ -45,10 +46,79 @@ var FSHADER_SOURCE =
     '}\n';
 
 
+var VSHADER_SOURCE_SHADOWMAP =
+    'attribute vec3 position;\n' +
+    'uniform mat4 u_ViewMatrix;\n' +
+    'uniform mat4 lmatrix;\n'+
+    'varying float vDepth;\n' +
+    'void main(){\n' +
+    '   vec4 position = u_ViewMatrix * lmatrix * vec4(position, 1.0);\n' +
+    '   float zBuf = position.z / position.w;\n' +  // Z-buffer between [-1,1]
+    '   vDepth = 0.5 + zBuf * 0.5;\n' +             // [0,1]
+    '   gl_Position = position;\n' +
+    '}\n';
+
+var FSHADER_SOURCE_SHADOWMAP =
+    'precision mediump float;\n' +
+    'varying float vDepth;\n' +
+    'void main(){\n' +
+    '   gl_FragColor = vec4(vDepth, 0.0, 0.0, 1.0);\n' +
+    '}\n';
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // == Funkcje pomocnicze ===============================================================================================
 // ---------------------------------------------------------------------------------------------------------------------
+
+
+function get_projection_ortho(width, a, zMin, zMax) {
+    var right = width/2;   //right bound of the projection volume
+    var left = -width/2;   //left bound of the proj. vol.
+    var top = (width/a)/2; //top bound
+    var bottom = -(width/a)/2; //bottom bound
+
+    return [
+        2/(right-left),  0 ,             0,          0,
+        0,              2/(top-bottom),  0,          0,
+        0,               0,           2/(zMax-zMin),  0,
+        0,               0,              0,          1
+    ];
+}
+
+function lookAtDir(direction,up, C) {
+    var z=[-direction[0], -direction[1], -direction[2]];
+
+    var x=this.crossVector(up,z);
+    this.normalizeVector(x);
+
+    //orthogonal vector to (C,z) in the plane(y,u)
+    var y=this.crossVector(z,x); //zx
+
+    return [x[0], y[0], z[0], 0,
+        x[1], y[1], z[1], 0,
+        x[2], y[2], z[2], 0,
+        -(x[0]*C[0]+x[1]*C[1]+x[2]*C[2]),
+        -(y[0]*C[0]+y[1]*C[1]+y[2]*C[2]),
+        -(z[0]*C[0]+z[1]*C[1]+z[2]*C[2]),
+        1];
+}
+
+function crossVector(u,v) {
+    return [u[1]*v[2]-v[1]*u[2],
+        u[2]*v[0]-u[0]*v[2],
+        u[0]*v[1]-u[1]*v[0]];
+}
+
+function normalizeVector(v) {
+    var n=this.sizeVector(v);
+    v[0]/=n; v[1]/=n; v[2]/=n;
+}
+
+function sizeVector(v) {
+    return Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+}
+
+
 
 
 var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
@@ -368,15 +438,37 @@ function drawStuff() {
     gl.viewportwidth = canvas.width;
     gl.viewportheight = canvas.height;
 
-    var pixelShader = gl.createShader(gl.FRAGMENT_SHADER);
-    gl.shaderSource(pixelShader, FSHADER_SOURCE);
-    gl.compileShader(pixelShader);
 
+    // program obliczajacy mapy cieni: --------------------------------------------
+    var vertexShaderShadowMap = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShaderShadowMap, VSHADER_SOURCE_SHADOWMAP);
+    gl.compileShader(vertexShaderShadowMap);
+
+    var pixelShaderShadowMap = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(pixelShaderShadowMap, FSHADER_SOURCE_SHADOWMAP);
+    gl.compileShader(pixelShaderShadowMap);
+
+    var program_shadow = gl.createProgram();
+    gl.attachShader(program_shadow, vertexShaderShadowMap);
+    gl.attachShader(program_shadow, pixelShaderShadowMap);
+
+    gl.linkProgram(program_shadow);
+
+    var u_ViewMatrixShadow = gl.getUniformLocation(program_shadow, "u_ViewMatrix");
+    var lightMatrix = gl.getUniformLocation(program_shadow, "lmatrix");
+    var positionShadow = gl.getAttribLocation(program_shadow, "position");
+
+
+    // glowny program: ------------------------------------------------------------
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, VSHADER_SOURCE);
     gl.compileShader(vertexShader);
 
-    console.log(pixelShader);
+    var pixelShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(pixelShader, FSHADER_SOURCE);
+    gl.compileShader(pixelShader);
+
+    //console.log(pixelShader);
 
     var program = gl.createProgram();
 
@@ -486,15 +578,23 @@ function drawStuff() {
 
     var position = gl.getAttribLocation(gl.program, 'position');
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 8, 0);
-    gl.enableVertexAttribArray(position);
 
     var normal = gl.getAttribLocation(gl.program, 'normal');
     gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
-    gl.enableVertexAttribArray(normal);
 
     var a_TextCoord = gl.getAttribLocation(gl.program, 'aTexCoord');
     gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 6);
-    gl.enableVertexAttribArray(a_TextCoord);
+
+
+
+
+    var _lightDirection = gl.getUniformLocation(gl.program, "source_direction");
+    var LIGHTDIR = [0.58, 0.58, -0.58];
+    gl.uniform3fv(_lightDirection, LIGHTDIR);
+
+
+
+
 
     var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
 
@@ -516,6 +616,50 @@ function drawStuff() {
     sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, u_Sampler, 2, sphereImg); };
 
 
+
+
+
+
+    var PROJMATRIX_SHADOW = get_projection_ortho(20, 1, 5, 28);
+    var LIGHTMATRIX = lookAtDir(LIGHTDIR, [0,1,0], [0,0,0]);
+
+
+
+
+
+    /*========================= RENDER TO TEXTURE ========================= */
+    var fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+
+    var rb = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, rb);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16 , 512, 512);
+
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, rb);
+
+
+    var texture_rtt = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture_rtt);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 512, 512, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture_rtt, 0);
+
+
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+
+
+
+
+
+
+
+
+
+
     // animowanie sceny: ===============================================================================================
     var tick = function(){
         // animowanie elementow sceny: ------------------------------------------------------
@@ -524,6 +668,36 @@ function drawStuff() {
         // rysowanie elementow sceny: ------------------------------------------------------
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+
+
+        //===================== RENDER THE SHADOW MAP ==========================
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        gl.useProgram(program_shadow);
+        gl.enableVertexAttribArray(positionShadow);
+
+        gl.clearColor(1.0, 0.0, 0.0, 1.0); //red -> Z = Zfar on the shadow map
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        gl.uniformMatrix4fv(u_ViewMatrixShadow, false, PROJMATRIX_SHADOW);
+        gl.uniformMatrix4fv(lightMatrix, false, LIGHTMATRIX);
+
+        gl.drawArrays(gl.TRIANGLES, 0, floorN);
+        gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
+        gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
+        gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
+        gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
+
+        gl.disableVertexAttribArray(positionShadow);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+
+
+        //===================== RENDER THE SCENE ==========================
+        gl.useProgram(program);
+        gl.enableVertexAttribArray(position);
+        gl.enableVertexAttribArray(normal);
+        gl.enableVertexAttribArray(a_TextCoord);
 
         // ustawiam wyjsciowa rotacje i rysuje podloze:
         gl.uniform1i(u_Sampler, 0);
@@ -544,6 +718,9 @@ function drawStuff() {
         gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
         gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 
+        gl.disableVertexAttribArray(position);
+        gl.disableVertexAttribArray(normal);
+        gl.disableVertexAttribArray(a_TextCoord);
 
         requestAnimationFrame(tick);    // request that the browser calls tick
     };
