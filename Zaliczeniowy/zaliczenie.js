@@ -14,7 +14,7 @@ var VSHADER_SOURCE_SHADOWMAP =
     'varying float vDepth;\n' +
     'void main(){\n' +
     '   vec4 position = u_ViewMatrix * lmatrix * vec4(position, 1.0);\n' +
-    '   float zBuf = position.z / position.w;\n' +  // Z-buffer between [-1,1]
+    '   float zBuf = position.z / position.w;\n' +  // Z-buffer w przedziale [-1,1]
     '   vDepth = 0.5 + zBuf * 0.5;\n' +             // [0,1]
     '   gl_Position = position;\n' +
     '}\n';
@@ -41,13 +41,12 @@ var VSHADER_SOURCE =
     'varying vec3 vNormal;\n'+
     'varying vec3 vLightPos;\n' +
     'void main() {\n' +
-
+    // obliczamy pozycje swiatla:
     '   vec4 lightPos = lmatrix * position;\n' +
-    //'   vec4 lightPos = lmatrix * vec4(position, 1.0);\n' +
     '   lightPos = pmatrixLight * lightPos;\n' +
     '   vec3 lightPosDNC = lightPos.xyz / lightPos.w;\n' +
     '   vLightPos = vec3(0.5, 0.5, 0.5) + lightPosDNC * 0.5;\n' +
-
+    // obliczamy reszte rzeczy
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
     '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
@@ -64,33 +63,23 @@ var FSHADER_SOURCE =
     'const vec3 source_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 source_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'uniform vec3 source_direction;\n' +
-    //'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
     // parametry materialu:
     'const vec3 mat_ambient_color  = vec3(0.3, 0.3, 0.3);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
-
-
+    // obliczamy cienie:
     '   vec2 uv_shadowMap = vLightPos.xy;\n' +
     '   vec4 shadowMapColor = vec4( texture2D(uSamplerShadow, uv_shadowMap) );\n' +
     '   float zShadowMap = shadowMapColor.r;\n' +
     '   gl_FragColor = vec4(zShadowMap, 0.0, 0.0, 1.0);\n' +
-
-
-        // DEBUG
-    '   if(zShadowMap < vLightPos.z){\n' +                  // jesli wykryje cien, pomaluje go na zielono
-    '       gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);\n' +
-    '       return;\n' +
-    '   }\n' +
-
-
-    '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
-        // obliczamy elementy oswietlenia:
-    '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
-    '    vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
-    '    vec3 I = I_ambient + I_diffuse;\n' +
-    '    gl_FragColor = vec4(I * color, 1.0);\n' +
+    '   float shadowCoeff = 1.0 - smoothstep(0.002, 0.003, vLightPos.z - zShadowMap);\n' +
+    '   vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
+    // obliczamy elementy oswietlenia:
+    '   vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
+    '   vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
+    '   vec3 I = I_ambient + shadowCoeff * I_diffuse;\n' +
+    '   gl_FragColor = vec4(I * color, 1.0);\n' +
     '}\n';
 
 
@@ -697,7 +686,7 @@ function drawStuff() {
         gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
         gl.useProgram(program_shadow);
         gl.enableVertexAttribArray(positionShadow);
-        gl.viewport(0.0, 0.0, 512,512);
+        //gl.viewport(0.0, 0.0, 512,512);
 
         gl.clearColor(1.0, 0.0, 0.0, 1.0); //red -> Z = Zfar on the shadow map
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
