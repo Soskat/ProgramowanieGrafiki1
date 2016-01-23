@@ -29,13 +29,11 @@ var FSHADER_SOURCE =
     'varying vec3 vNormal;\n'+
     // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
-    'const vec3 source_diffuse_color  = vec3(1.0, 2.0, 4.0);\n' +
-    'const vec3 source_specular_color = vec3(1.0, 1.0, 1.0);\n' +
+    'const vec3 source_diffuse_color  = vec3(1.5, 1.5, 1.5);\n' +
     'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
     // parametry materialu:
     'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
-    'const vec3 mat_specular_color = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
     '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
@@ -54,7 +52,6 @@ var FSHADER_SOURCE =
 
 
 var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
-
 // Obsluga klawiszy strzalek
 function keydown(ev){
     if(ev.keyCode == 38){
@@ -74,7 +71,6 @@ function keydown(ev){
 
 var viewMatrix = new Float32Array(16);  // macierz widoku
 var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
-
 // Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
@@ -158,7 +154,6 @@ function rotateY(m, angle) {
 var rotMatrixCube = new Float32Array(16);                               // macierz rotacji szescianu
 var rotMatrixSphere = new Float32Array(16);                             // macierz rotacji sfery
 var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);  // macierz jednostkowa
-
 // Aktualizuje macierz rotacji
 function setNewRotateMatrix(rotMatrix, angle, axis){
     var radian = Math.PI * angle / 180.0;   // degr to radians
@@ -192,8 +187,7 @@ function setNewRotateMatrix(rotMatrix, angle, axis){
 }
 
 
-var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
-
+var transMatrix = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);   // macierz translacji
 // Aktualizuje macierz translacji
 function setNewSphereTranslationMatrix(angle, r){
     var radian = Math.PI * angle / 180.0;   // degr to radians
@@ -207,7 +201,6 @@ function setNewSphereTranslationMatrix(angle, r){
 
 var g_last = Date.now();
 var currentAngle = 0.0;
-
 // Animuje elementy sceny
 function animate(gl, u_ViewMatrix, r){
     var ANGLE_STEP = 45.0;
@@ -246,8 +239,7 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
 }
 
 
-var Nx = 0.0, Ny = 0.0, Nz = 0.0;
-
+var Nx = 0.0, Ny = 0.0, Nz = 0.0;   // wspolrzedne wektora normalnego
 // Oblicza wektor normalny dla podanej powierzchni (trojki punktow):
 function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
     // U = p2 - p1
@@ -269,7 +261,6 @@ function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
 var bigR = 0.2;                             // promien sfery
 var accuracy = 10;                          // dokladnosc modelu sfery
 var upCape = 0, middle = 0, downCape = 0;   // liczniki wierzcholkow spodow i ciala sfery
-
 // Rysuje model sfery:
 function drawSphere(vertices, bigR, accuracy){
     var alpha = 2 * Math.PI / accuracy;             // kat na plaszczyznie X-Z
