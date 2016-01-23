@@ -16,13 +16,10 @@ var VSHADER_SOURCE =
     'uniform mat4 tmatrix;\n'+
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
-    //'varying vec3 vView;\n'+
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
     '   vNormal = vec3(tmatrix * rmatrix * vec4(normalize(normal), 0.0));\n' +
-    //'   vNormal = normal;\n' +
-    //'   vView = vec3(gl_Position);\n' +
     '}\n';
 
 var FSHADER_SOURCE =
@@ -30,7 +27,6 @@ var FSHADER_SOURCE =
     'uniform sampler2D uSampler;\n' +
     'varying vec2 vTexCoord;\n'+
     'varying vec3 vNormal;\n'+
-    //'varying vec3 vView;\n'+
     // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.0, 2.0, 4.0);\n' +
@@ -46,13 +42,8 @@ var FSHADER_SOURCE =
         // obliczamy elementy oswietlenia:
     '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
     '    vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
-    //'    vec3 V = normalize(vView);\n' +
-    //'    vec3 R = reflect(source_direction, vNormal);\n' +
-    //'    vec3 I_specular = source_specular_color * mat_specular_color * pow(max(dot(R, V), 0.0), mat_shininess);\n' +
-    //'    vec3 I = I_ambient + I_diffuse + I_specular;\n' +
     '    vec3 I = I_ambient + I_diffuse;\n' +
     '    gl_FragColor = vec4(I * color, 1.0);\n' +
-    //'    gl_FragColor = texture2D(uSampler, vTexCoord);\n' +
     '}\n';
 
 
@@ -164,11 +155,9 @@ function rotateY(m, angle) {
 }
 
 
-
-
-var rotMatrixCube = new Float32Array(16);   // macierz rotacji szescianu
-var rotMatrixSphere = new Float32Array(16); // macierz rotacji sfery
-var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);
+var rotMatrixCube = new Float32Array(16);                               // macierz rotacji szescianu
+var rotMatrixSphere = new Float32Array(16);                             // macierz rotacji sfery
+var identity = new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]);  // macierz jednostkowa
 
 // Aktualizuje macierz rotacji
 function setNewRotateMatrix(rotMatrix, angle, axis){
@@ -219,8 +208,8 @@ function setNewSphereTranslationMatrix(angle, r){
 var g_last = Date.now();
 var currentAngle = 0.0;
 
-// Animowanie elementow sceny
-function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, middle, downCape, u_Sampler){
+// Animuje elementy sceny
+function animate(gl, u_ViewMatrix, r){
     var ANGLE_STEP = 45.0;
     var now = Date.now();
     var elapsed = now - g_last; // milisec
@@ -234,35 +223,13 @@ function animate(gl, u_ViewMatrix, rMatrix, tMatrix, r, floorN, cubeN, upCape, m
     theta = 0.0;
     phi = 0.0;
 
-    setNewSphereTranslationMatrix(currentAngle, r);             // przesuniecie sfery
+    setNewSphereTranslationMatrix(-currentAngle, r);             // przesuniecie sfery
     setNewRotateMatrix(rotMatrixSphere, currentAngle, 'X');     // rotacja sfery
     setNewRotateMatrix(rotMatrixCube, currentAngle, 'Y');       // rotacja szescianu
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-    // ustawiam wyjsciowa rotacje i rysuje podloze:
-    gl.uniform1i(u_Sampler, 0);
-    gl.uniformMatrix4fv(tMatrix, false, identity);
-    gl.uniformMatrix4fv(rMatrix, false, identity);
-    gl.drawArrays(gl.TRIANGLES, 0, floorN);
-
-    // ustawiam rotacje dla szescianu i go rysuje:
-    gl.uniform1i(u_Sampler, 1);
-    gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
-
-    // ustawiam wyjsciowa rotacje i rysuje sfere:
-    gl.uniform1i(u_Sampler, 2);
-    gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-    gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
-    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
-    gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
-    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 }
 
 
-// Wczytywanie tekstury:
+// Wczytuje teksture:
 function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
 
@@ -450,7 +417,6 @@ function drawStuff() {
     ];
     var floorN = vertices.length / 8;
 
-
     vertices.push(
         // wspolrz.:         // normalne      // wspolrz. tekstury:
         -0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    0.5,  0.5,
@@ -509,6 +475,7 @@ function drawStuff() {
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturedVertices), gl.STATIC_DRAW);
 
+
     // tworzenie bufora punktow: =======================================================================================
     var vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -539,53 +506,56 @@ function drawStuff() {
     gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 6);
     gl.enableVertexAttribArray(a_TextCoord);
 
-
     var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
 
 
     // tworzenie tekstur (i rysowanie elementow sceny): ================================================================
-    //var floor_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
-    floorImg.src = "basketStyle.jpg";
+    floorImg.src = "crackedYellow.jpg";
     floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, u_Sampler, 0, floorImg); };
 
-    //console.log(gl.TEXTURE0);
-
-    gl.uniform1i(u_Sampler, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, floorN);
-
-
-    //var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
     cubeImg.src = "differentWalls.jpg";
     cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, u_Sampler, 1, cubeImg); };
 
-    //console.log(gl.TEXTURE1);
-
-    gl.uniform1i(u_Sampler, 1);
-    gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
-
-
-    //var sphere_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var sphereTexture = gl.createTexture();
     var sphereImg = new Image();
-    sphereImg.src = "cracked.jpg";
+    sphereImg.src = "mosaic.jpg";
     sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, u_Sampler, 2, sphereImg); };
-
-    //console.log(gl.TEXTURE2);
-
-    gl.uniform1i(u_Sampler, 2);
-    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
-    gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
-    gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 
 
     // animowanie sceny: ===============================================================================================
     var tick = function(){
-        animate(gl, u_ViewMatrix, rMatrix, tMatrix, 0.5, floorN, cubeN, upCape, middle, downCape);  // uruchamia animacje elementow sceny
-        requestAnimationFrame(tick);                                                                // request that the browser calls tick
+        // animowanie elementow sceny: ------------------------------------------------------
+        animate(gl, u_ViewMatrix, 0.5);
+
+        // rysowanie elementow sceny: ------------------------------------------------------
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        // ustawiam wyjsciowa rotacje i rysuje podloze:
+        gl.uniform1i(u_Sampler, 0);
+        gl.uniformMatrix4fv(tMatrix, false, identity);
+        gl.uniformMatrix4fv(rMatrix, false, identity);
+        gl.drawArrays(gl.TRIANGLES, 0, floorN);
+
+        // ustawiam rotacje dla szescianu i go rysuje:
+        gl.uniform1i(u_Sampler, 1);
+        gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
+        gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
+
+        // ustawiam wyjsciowa rotacje i rysuje sfere:
+        gl.uniform1i(u_Sampler, 2);
+        gl.uniformMatrix4fv(tMatrix, false, transMatrix);
+        gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
+        gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
+        gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
+        gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
+
+
+        requestAnimationFrame(tick);    // request that the browser calls tick
     };
 
     tick();
