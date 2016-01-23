@@ -70,7 +70,6 @@ function keydown(ev){
 
 
 var viewMatrix = new Float32Array(16);  // macierz widoku
-var g_eyeX = 0.20, g_eyeY = -0.25, g_eyeZ = 0.25;
 // Ustawia macierz widoku
 function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
     var fx, fy, fz, rlf, sx, sy, sz, rls, ux, uy, uz;
@@ -476,7 +475,7 @@ function drawStuff() {
     // wyciaganie danych z shadera: ====================================================================================
     var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
     document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
-    setLookAt(g_eyeX, g_eyeY, g_eyeZ, 0, 0, 0, 0, 1, 0);
+    setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
 
     var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');     // macierz rotacji
