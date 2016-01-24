@@ -8,14 +8,14 @@
 // ---------------------------------------------------------------------------------------------------------------------
 
 var VSHADER_SOURCE =
-    'attribute vec4 position;\n'+
-    'attribute vec2 aTexCoord;\n'+
-    'attribute vec3 normal;\n'+
-    'uniform mat4 u_ViewMatrix;\n'+
-    'uniform mat4 rmatrix;\n'+
-    'uniform mat4 tmatrix;\n'+
-    'varying vec2 vTexCoord;\n'+
-    'varying vec3 vNormal;\n'+
+    'attribute vec4 position;\n' +
+    'attribute vec2 aTexCoord;\n' +
+    'attribute vec3 normal;\n' +
+    'uniform mat4 u_ViewMatrix;\n' +
+    'uniform mat4 rmatrix;\n' +
+    'uniform mat4 tmatrix;\n' +
+    'varying vec2 vTexCoord;\n' +
+    'varying vec3 vNormal;\n' +
     'void main() {\n' +
     '   gl_Position = u_ViewMatrix * tmatrix * rmatrix * position;\n' +
     '   vTexCoord = aTexCoord;\n' +
@@ -25,23 +25,23 @@ var VSHADER_SOURCE =
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'uniform sampler2D uSampler;\n' +
-    'varying vec2 vTexCoord;\n'+
-    'varying vec3 vNormal;\n'+
-        // parametry zrodla swiatla:
+    'varying vec2 vTexCoord;\n' +
+    'varying vec3 vNormal;\n' +
+    // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.5, 1.5, 1.5);\n' +
     'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
-        // parametry materialu:
-    'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.);\n' +
+    // parametry materialu:
+    'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
     'void main(){\n' +
-    '    vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
+    '   vec3 color = vec3(texture2D(uSampler, vTexCoord));\n' +
         // obliczamy elementy oswietlenia:
-    '    vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
-    '    vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
-    '    vec3 I = I_ambient + I_diffuse;\n' +
-    '    gl_FragColor = vec4(I * color, 1.0);\n' +
+    '   vec3 I_ambient = source_ambient_color * mat_ambient_color;\n' +
+    '   vec3 I_diffuse = source_diffuse_color * mat_diffuse_color * max(0.0, dot(vNormal, source_direction));\n' +
+    '   vec3 I = I_ambient + I_diffuse;\n' +
+    '   gl_FragColor = vec4(I * color, 1.0);\n' +
     '}\n';
 
 
@@ -50,8 +50,7 @@ var FSHADER_SOURCE =
 // == Funkcje pomocnicze ===============================================================================================
 // ---------------------------------------------------------------------------------------------------------------------
 
-
-var theta = 0.0, phi = 0.0; // katy obrotu macierzy widoku
+var theta = 0.0, phi = 0.0;             // katy obrotu macierzy widoku
 // Obsluga klawiszy strzalek
 function keydown(ev){
     if(ev.keyCode == 38){
@@ -118,35 +117,33 @@ function setLookAt(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ){
 }
 
 
-// Obraca podana macierz w osi X o wskazany kat
-function rotateX(m, angle) {
-    var c = Math.cos(angle);
-    var s = Math.sin(angle);
-    var mv1 = m[1], mv5 = m[5], mv9 = m[9];
-
-    m[1] = m[1] * c - m[2] * s;
-    m[5] = m[5] * c - m[6] * s;
-    m[9] = m[9] * c - m[10] * s;
-
-    m[2] = m[2] * c + mv1 * s;
-    m[6] = m[6] * c + mv5 * s;
-    m[10] = m[10] * c + mv9 * s;
-}
-
-
-// Obraca podana macierz w osi Y o wskazany kat
-function rotateY(m, angle) {
+// Obraca podana macierz o wskazany kat w osi X lub Y
+function rotateView(m, angle, axis){
     var c = Math.cos(angle);
     var s = Math.sin(angle);
 
-    var mv0 = m[0], mv4 = m[4], mv8 = m[8];
-    m[0] = c * m[0] + s * m[2];
-    m[4] = c * m[4] + s * m[6];
-    m[8] = c * m[8] + s * m[10];
+    if(axis == 'X'){
+        var mv1 = m[1], mv5 = m[5], mv9 = m[9];
 
-    m[2] = c * m[2] - s * mv0;
-    m[6] = c * m[6] - s * mv4;
-    m[10] = c * m[10] - s * mv8;
+        m[1] = m[1] * c - m[2] * s;
+        m[5] = m[5] * c - m[6] * s;
+        m[9] = m[9] * c - m[10] * s;
+
+        m[2] = m[2] * c + mv1 * s;
+        m[6] = m[6] * c + mv5 * s;
+        m[10] = m[10] * c + mv9 * s;
+    }
+    else if (axis == 'Y'){
+        var mv0 = m[0], mv4 = m[4], mv8 = m[8];
+
+        m[0] = c * m[0] + s * m[2];
+        m[4] = c * m[4] + s * m[6];
+        m[8] = c * m[8] + s * m[10];
+
+        m[2] = c * m[2] - s * mv0;
+        m[6] = c * m[6] - s * mv4;
+        m[10] = c * m[10] - s * mv8;
+    }
 }
 
 
@@ -209,13 +206,13 @@ function animate(gl, u_ViewMatrix, r){
     currentAngle = (currentAngle + (ANGLE_STEP * elapsed) / 1000.0) % 360;
 
     // aktualizacja perspektywy:
-    rotateY(viewMatrix, theta);
-    rotateX(viewMatrix, phi);
+    rotateView(viewMatrix, theta, 'Y');
+    rotateView(viewMatrix, phi, 'X');
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
     theta = 0.0;
     phi = 0.0;
 
-    setNewSphereTranslationMatrix(-currentAngle, r);             // przesuniecie sfery
+    setNewSphereTranslationMatrix(-currentAngle, r);            // przesuniecie sfery
     setNewRotateMatrix(rotMatrixSphere, currentAngle, 'X');     // rotacja sfery
     setNewRotateMatrix(rotMatrixCube, currentAngle, 'Y');       // rotacja szescianu
 }
@@ -354,9 +351,8 @@ function drawSphere(vertices, bigR, accuracy){
 // == Program glowny ===================================================================================================
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Rysuje rzeczy w Canvasie:
+// Funkcja glowna; rysuje rzeczy w Canvasie:
 function drawStuff() {
-    // ladowanie shaderow do programu: =================================================================================
     var canvas = document.getElementById('MyFirstCanvas');
     var gl = canvas.getContext("webgl");
     console.log(gl);
@@ -368,6 +364,7 @@ function drawStuff() {
     gl.viewportwidth = canvas.width;
     gl.viewportheight = canvas.height;
 
+    // ladowanie shaderow do programu: =================================================================================
     var pixelShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(pixelShader, FSHADER_SOURCE);
     gl.compileShader(pixelShader);
@@ -375,8 +372,6 @@ function drawStuff() {
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, VSHADER_SOURCE);
     gl.compileShader(vertexShader);
-
-    console.log(pixelShader);
 
     var program = gl.createProgram();
 
@@ -398,30 +393,30 @@ function drawStuff() {
     // tworzenie listy punktow: ========================================================================================
     var vertices = [
         // wspolrz.:         // normalne      // wspolrz. tekstury:
-        -0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.25, 0.25,
-        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.25, 0.5,
-        0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.5,  0.25,
-        0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.5,  0.25,
-        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.25, 0.5,
-        0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.5,  0.5
+        -0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    0.0, 0.0,
+        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.0, 1.0,
+         0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    1.0, 0.0,
+         0.5, -0.5, -0.5,    0.0,  1.0,  0.0,    1.0, 0.0,
+        -0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    0.0, 1.0,
+         0.5, -0.5,  0.5,    0.0,  1.0,  0.0,    1.0, 1.0
     ];
     var floorN = vertices.length / 8;
 
     vertices.push(
         // wspolrz.:         // normalne      // wspolrz. tekstury:
         -0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    0.5,  0.5,
-        0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
+         0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
         -0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    0.5,  0.75,
         -0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    0.5,  0.75,
-        0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
-        0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    1.0,  0.75,
+         0.1, -0.1,  0.1,    0.0, -1.0,  0.0,    1.0,  0.5,
+         0.1, -0.1, -0.1,    0.0, -1.0,  0.0,    1.0,  0.75,
 
         -0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.0,
-        0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
+         0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
         -0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.25,
         -0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    0.5,  0.25,
-        0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
-        0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.25,
+         0.1, -0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.0,
+         0.1,  0.1, -0.1,    0.0,  0.0, -1.0,    1.0,  0.25,
 
         -0.1, -0.1,  0.1,   -1.0,  0.0,  0.0,    0.0,  0.5,
         -0.1, -0.1, -0.1,   -1.0,  0.0,  0.0,    0.0,  0.25,
@@ -431,24 +426,24 @@ function drawStuff() {
         -0.1,  0.1, -0.1,   -1.0,  0.0,  0.0,    0.5,  0.25,
 
         -0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.25,
-        0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
+         0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
         -0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.0,
         -0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.0,  0.0,
-        0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
-        0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.0,
+         0.1, -0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.25,
+         0.1,  0.1,  0.1,    0.0,  0.0,  1.0,    0.5,  0.0,
 
-        0.1, -0.1,  0.1,    1.0,  0.0,  0.0,    1.0,  0.5,
-        0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
-        0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
-        0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
-        0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
-        0.1,  0.1, -0.1,    1.0,  0.0,  0.0,    0.5,  0.25,
+         0.1, -0.1,  0.1,    1.0,  0.0,  0.0,    1.0,  0.5,
+         0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
+         0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
+         0.1, -0.1, -0.1,    1.0,  0.0,  0.0,    1.0,  0.25,
+         0.1,  0.1,  0.1,    1.0,  0.0,  0.0,    0.5,  0.5,
+         0.1,  0.1, -0.1,    1.0,  0.0,  0.0,    0.5,  0.25,
 
-        0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.5,  0.75,
-        0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
+         0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.5,  0.75,
+         0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
         -0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.0,  0.75,
         -0.1,  0.1,  0.1,    0.0,  1.0,  0.0,    0.0,  0.75,
-        0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
+         0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.5,  0.5,
         -0.1,  0.1, -0.1,    0.0,  1.0,  0.0,    0.0,  0.5
     );
     var cubeN = (vertices.length / 8) - floorN;
@@ -499,7 +494,7 @@ function drawStuff() {
     var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
 
 
-    // tworzenie tekstur (i rysowanie elementow sceny): ================================================================
+    // tworzenie tekstur: ==============================================================================================
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
     floorImg.src = "crackedYellow.jpg";
