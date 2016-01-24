@@ -467,31 +467,29 @@ function drawStuff() {
     gl.bufferData(gl.ARRAY_BUFFER, texturedVertices, gl.STATIC_DRAW);
 
 
-    // wyciaganie danych z shadera: ====================================================================================
-    var u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');   // macierz perspektywy
-    document.onkeydown = function(ev){ keydown(ev); };                      // uruchamiamy obsluge klawiszy
+    // edytowanie danych z shadera: ====================================================================================
+    var u_ViewMatrix    = gl.getUniformLocation(gl.program, 'u_ViewMatrix');    // macierz widoku
+    var tMatrix         = gl.getUniformLocation(gl.program, 'tmatrix');         // macierz translacji
+    var rMatrix         = gl.getUniformLocation(gl.program, 'rmatrix');         // macierz rotacji
+    var position        = gl.getAttribLocation(gl.program, 'position');         // pozycja w przestrzeni
+    var normal          = gl.getAttribLocation(gl.program, 'normal');           // wektor normalny
+    var a_TextCoord     = gl.getAttribLocation(gl.program, 'aTexCoord');        // wspó³rzêdne tekstur
+    var u_Sampler       = gl.getUniformLocation(gl.program, 'uSampler');        // sampler tekstury
+
+    document.onkeydown = function(ev){ keydown(ev); };  // uruchamiamy obsluge klawiszy
     setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
+
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
-
-    var rMatrix = gl.getUniformLocation(gl.program, 'rmatrix');     // macierz rotacji
     gl.uniformMatrix4fv(rMatrix, false, identity);
-
-    var tMatrix = gl.getUniformLocation(gl.program, 'tmatrix');     // macierz translacji
     gl.uniformMatrix4fv(tMatrix, false, identity);
 
-    var position = gl.getAttribLocation(gl.program, 'position');
     gl.vertexAttribPointer(position, 3, gl.FLOAT, false, FSIZE * 8, 0);
-    gl.enableVertexAttribArray(position);
-
-    var normal = gl.getAttribLocation(gl.program, 'normal');
     gl.vertexAttribPointer(normal, 3, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
-    gl.enableVertexAttribArray(normal);
-
-    var a_TextCoord = gl.getAttribLocation(gl.program, 'aTexCoord');
     gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 6);
-    gl.enableVertexAttribArray(a_TextCoord);
 
-    var u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
+    gl.enableVertexAttribArray(position);
+    gl.enableVertexAttribArray(normal);
+    gl.enableVertexAttribArray(a_TextCoord);
 
 
     // tworzenie tekstur: ==============================================================================================
