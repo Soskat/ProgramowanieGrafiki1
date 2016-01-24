@@ -623,7 +623,7 @@ function drawStuff() {
     var cube_u_Sampler = gl.getUniformLocation(gl.program, 'uSampler');
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
-    cubeImg.src = "differentWalls.jpg";
+    cubeImg.src = "pz_differentWalls.jpg";
     cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, cube_u_Sampler, 1, cubeImg); };
 
     console.log(gl.TEXTURE1);

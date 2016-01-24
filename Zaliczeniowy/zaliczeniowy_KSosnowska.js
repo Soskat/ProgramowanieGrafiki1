@@ -497,17 +497,17 @@ function drawStuff() {
     // tworzenie tekstur: ==============================================================================================
     var floorTexture = gl.createTexture();
     var floorImg = new Image();
-    floorImg.src = "crackedYellow.jpg";
+    floorImg.src = "pz_crackedYellow.jpg";
     floorImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE0, floorTexture, u_Sampler, 0, floorImg); };
 
     var cubeTexture = gl.createTexture();
     var cubeImg = new Image();
-    cubeImg.src = "differentWalls.jpg";
+    cubeImg.src = "pz_differentWalls.jpg";
     cubeImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE1, cubeTexture, u_Sampler, 1, cubeImg); };
 
     var sphereTexture = gl.createTexture();
     var sphereImg = new Image();
-    sphereImg.src = "mosaic.jpg";
+    sphereImg.src = "pz_mosaic.jpg";
     sphereImg.onload = function(){ loadTextureSettings(gl, gl.TEXTURE2, sphereTexture, u_Sampler, 2, sphereImg); };
 
 
