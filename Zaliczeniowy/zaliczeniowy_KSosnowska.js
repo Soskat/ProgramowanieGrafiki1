@@ -455,12 +455,6 @@ function drawStuff() {
     var FSIZE = texturedVertices.BYTES_PER_ELEMENT;     // rozmiar pojedynczego elementu w buforze
 
 
-    // tworzenie bufora tekstury: ======================================================================================
-    var textureBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(texturedVertices), gl.STATIC_DRAW);
-
-
     // tworzenie bufora punktow: =======================================================================================
     var vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
