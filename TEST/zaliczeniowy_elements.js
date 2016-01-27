@@ -2,7 +2,6 @@
  * Created by Louve on 24.01.2016.
  */
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // == Programy shaderow ================================================================================================
 // ---------------------------------------------------------------------------------------------------------------------
@@ -231,136 +230,20 @@ function loadTextureSettings(gl, gl_texture, texture, u_Sampler, index, img){
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl. RGB, gl.UNSIGNED_BYTE, img);
-    gl.uniform1i(u_Sampler, index); // przeniesienie do pamieci
+    gl.uniform1i(u_Sampler, index);
 }
 
-
-var Nx = 0.0, Ny = 0.0, Nz = 0.0;   // wspolrzedne wektora normalnego
-// Oblicza wektor normalny dla podanej powierzchni (trojki punktow):
-function calculateNormal(p1x, p1y, p1z, p2x, p2y, p2z, p3x, p3y, p3z){
-    // U = p2 - p1
-    var Ux = p2x - p1x;
-    var Uy = p2y - p1y;
-    var Uz = p2z - p1z;
-
-    // V = p3 - p1
-    var Vx = p3x - p1x;
-    var Vy = p3y - p1y;
-    var Vz = p3z - p1z;
-
-    Nx = Uy * Vz - Uz * Vy;
-    Ny = Uz * Vx - Ux * Vz;
-    Nz = Ux * Vy - Uy * Vx;
-}
-
-
-var bigR = 0.2;                             // promien sfery
-var accuracy = 10;                          // dokladnosc modelu sfery
-var upCape = 0, middle = 0, downCape = 0;   // liczniki wierzcholkow spodow i ciala sfery
 
 // Rysuje model sfery:
-function drawSphereBACKUP(vertices, bigR, accuracy){
-    var alpha = 2 * Math.PI / accuracy;             // kat na plaszczyznie X-Z
-    var beta = Math.PI / accuracy;                  // kat na plaszczyznie X-Y
-    var i = 1, j;                                   // indeksy
-    var r1, r2;                                     // promienie dwoch wycinkow sfery
-    var y1, y2;                                     // wspolrzedne Y dwoch poziomow punktow
-    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych
-    // wierzcholki tekstury:
-    var t0x = 0.5, t0y = 0.0;
-    var t1x = 0.0, t1y = 0.0;
-    var t2x = 1.0, t2y = 0.0;
-    var t3x = 0.0, t3y = 1.0;
-    var t4x = 1.0, t4y = 1.0;
-
-    r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
-    y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
-
-    // rysujemy wierzch sfery:
-    vertices.push(0.0, bigR, 0.0,  0.0, 1.0, 0.0,  t0x, t0y);
-    upCape++;
-    for(j = 0; j <= accuracy; j += 2){
-        p1x = r1 * Math.cos(j * alpha);
-        p1z = r1 * Math.sin(j * alpha);
-        p2x = r1 * Math.cos((j + 1) * alpha);
-        p2z = r1 * Math.sin((j + 1) * alpha);
-
-        calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
-
-        vertices.push(p1x, y1, p1z, Nx, -Ny, Nz, t3x, t3y);
-        vertices.push(p2x, y1, p2z, Nx, -Ny, Nz, t4x, t4y);
-
-        upCape += 2;
-    }
-
-    for(i; i <= accuracy; i++){
-        // aktualizujemy dlugosc r1, r2, y1 i y2:
-        r1 = bigR * Math.sin(i * beta);
-        r2 = bigR * Math.sin((i + 1) * beta);
-        y1 = bigR * Math.cos(i * beta);
-        y2 = bigR * Math.cos((i + 1) * beta);
-
-        for(j = 0; j <= accuracy; j++){
-            // poziom I punktow:
-            p1x = r1 * Math.cos(j * alpha);
-            p1z = r1 * Math.sin(j * alpha);
-            p2x = r1 * Math.cos((j + 1) * alpha);
-            p2z = r1 * Math.sin((j + 1) * alpha);
-            // poziom II punktow:
-            p3x = r2 * Math.cos(j * alpha);
-            p3z = r2 * Math.sin(j * alpha);
-            p4x = r2 * Math.cos((j + 1) * alpha);
-            p4z = r2 * Math.sin((j + 1) * alpha);
-
-            // wsadzamy punkty do tablicy:
-            calculateNormal(p1x, y1, p1z, p2x, y1, p2z, p4x, y2, p4z);
-            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
-            vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t2x, t2y);
-            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-            calculateNormal(p4x, y2, p4z, p3x, y2, p3z, p1x, y1, p1z);
-            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-            vertices.push(p3x, y2, p3z, Nx, Ny, Nz, t3x, t3y);
-            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
-
-            middle += 6;
-        }
-    }
-
-    // rysujemy spod sfery:
-    vertices.push(0.0, -bigR, 0.0,  0.0, -1.0, 0.0,  t0x, t0y);
-    downCape++;
-    for(j = 0; j <= accuracy; j += 2){
-        p1x = r1 * Math.cos(j * alpha);
-        p1z = r1 * Math.sin(j * alpha);
-        p2x = r1 * Math.cos((j + 1) * alpha);
-        p2z = r1 * Math.sin((j + 1) * alpha);
-
-        calculateNormal(0.0, -bigR, 0.0, p1x, -y1, p1z, p2x, -y1, p2z);
-
-        vertices.push(p1x, -y1, p1z, Nx, Ny, Nz, t3x, t3y);
-        vertices.push(p2x, -y1, p2z, Nx, Ny, Nz, t4x, t4y);
-
-        downCape += 2;
-    }
-
-    //return vertices;
-}
-
-
-
-
 function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
     var i, ai, si, ci;
     var j, aj, sj, cj;
     var p1, p2;
     var x, y, z;
     var u, v;
-
     var index = vertices.length / 3;
-    console.log('index =', index);
 
-
-    // Generate coordinates
+    // tworzenie wierzcholkow punktow, wektorow normalych i tekstur
     for (j = 0; j <= SPHERE_DIV; j++) {
         aj = j * Math.PI / SPHERE_DIV;
         sj = Math.sin(aj);
@@ -382,13 +265,13 @@ function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
         }
     }
 
-    // Generate indices
+    // tworzenie indeksow
     for (j = 0; j < SPHERE_DIV + 2; j++) {
         for (i = 0; i < SPHERE_DIV + 6; i++) {
             p1 = j * (SPHERE_DIV + 1) + i;
             p2 = p1 + (SPHERE_DIV + 1);
 
-            if(p1 >= index && p2 < 149){
+            if(p1 >= index){
                 indices.push(p1);
                 indices.push(p2);
                 indices.push(p1 + 1);
@@ -402,7 +285,6 @@ function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
 }
 
 
-
 // ---------------------------------------------------------------------------------------------------------------------
 // == Program glowny ===================================================================================================
 // ---------------------------------------------------------------------------------------------------------------------
@@ -413,7 +295,7 @@ function drawStuff() {
     var gl = canvas.getContext("webgl");
     console.log(gl);
     if (!gl) {
-        console.log('webGl nie bangla');
+        console.log('Huston, webGl ma problem');
         return;
     }
 
@@ -468,16 +350,16 @@ function drawStuff() {
         -0.1,-0.1,-0.1,   0.1,-0.1,-0.1,  -0.1, 0.1,-0.1,   0.1, 0.1,-0.1, // back
         -0.1,-0.1, 0.1,  -0.1,-0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1, // left
         -0.1,-0.1, 0.1,   0.1,-0.1, 0.1,  -0.1, 0.1, 0.1,   0.1, 0.1, 0.1, // front
-        0.1,-0.1, 0.1,   0.1, 0.1, 0.1,   0.1,-0.1,-0.1,   0.1, 0.1,-0.1, // right
-        0.1, 0.1, 0.1,   0.1, 0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1  // up
+         0.1,-0.1, 0.1,   0.1, 0.1, 0.1,   0.1,-0.1,-0.1,   0.1, 0.1,-0.1, // right
+         0.1, 0.1, 0.1,   0.1, 0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1  // up
     );
     normals.push(
-        0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0, // down
-        0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0, // back
+         0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0, // down
+         0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0, // back
         -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0, // left
-        0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0, // front
-        1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0, // right
-        0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0  // up
+         0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0, // front
+         1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0, // right
+         0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0  // up
     );
     uvCoords.push(
         0.5,  0.5,   1.0,  0.5,   0.5,  0.75,   1.0,  0.75, // down
@@ -488,8 +370,8 @@ function drawStuff() {
         0.5,  0.75,  0.5,  0.5,   0.0,  0.75,   0.0,  0.5   // up
     );
     indices.push(
-        4,  5,  6,   5,  7,  6, // down
-        8, 10,  9,   9, 10, 11, // back
+        4,  5,  6,   5,  7,  6,  // down
+        8, 10,  9,   9, 10, 11,  // back
         12, 14, 13,  13, 14, 15, // left
         16, 18, 17,  17, 18, 19, // front
         20, 21, 22,  21, 23, 22, // right
@@ -497,24 +379,11 @@ function drawStuff() {
     );
     var cubeN = indices.length - floorN;
 
-    var fcV = vertices.length / 3;
-
-    var fcN = indices.length;
-
+    // sfera: --------------------------------------------------
+    var bigR = 0.2;         // promien sfery
+    var accuracy = 10;      // dokladnosc modelu sfery
     drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices);
     var sphereN = indices.length - (floorN + cubeN);
-
-
-    console.log('floorN =', floorN);
-    console.log('cubeN =', cubeN);
-    console.log('sphereN =', sphereN);
-
-    console.log('floor + cube indices =', fcN);
-    console.log('Sphere indices =', indices.length - fcN);
-
-    console.log('floor + cube vertices =', fcV)
-    console.log('Sphere vertices =', vertices.length / 3 - fcV)
-    console.log(indices);
 
 
     // tworzenie buforow: ==============================================================================================
@@ -589,20 +458,20 @@ function drawStuff() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // ustawiam wyjsciowa rotacje i rysuje podloze:
-        //gl.uniform1i(u_Sampler, 0);
+        gl.uniform1i(u_Sampler, 0);
         gl.uniformMatrix4fv(tMatrix, false, identity);
         gl.uniformMatrix4fv(rMatrix, false, identity);
-        //gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_BYTE, 0);
+        gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_BYTE, 0);
 
         // ustawiam rotacje dla szescianu i go rysuje:
-        //gl.uniform1i(u_Sampler, 1);
-        //gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-        //gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_BYTE, floorN);
+        gl.uniform1i(u_Sampler, 1);
+        gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
+        gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_BYTE, floorN);
 
         // ustawiam wyjsciowa rotacje i rysuje sfere:
         gl.uniform1i(u_Sampler, 2);
-        //gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-        //gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
+        gl.uniformMatrix4fv(tMatrix, false, transMatrix);
+        gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
         gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_BYTE, floorN + cubeN);
 
 
