@@ -349,108 +349,14 @@ function drawSphereBACKUP(vertices, bigR, accuracy){
 
 
 
-function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
-    var alpha = 2 * Math.PI / accuracy;             // kat na plaszczyznie X-Z
-    var beta = Math.PI / accuracy;                  // kat na plaszczyznie X-Y
-    //var i = 1, j;                                   // indeksy
-    var r1, r2;                                     // promienie dwoch wycinkow sfery
-    var y1, y2;                                     // wspolrzedne Y dwoch poziomow punktow
-    var p1x, p1z,  p2x, p2z,  p3x, p3z,  p4x, p4z;  // wspolrzedne X i Z czterech punktow pomocniczych
-    var peakIndex = index;
-    // wierzcholki tekstury:
-    var t0x = 0.5, t0y = 0.0;
-    var t1x = 0.0, t1y = 0.0;
-    var t2x = 1.0, t2y = 0.0;
-    var t3x = 0.0, t3y = 1.0;
-    var t4x = 1.0, t4y = 1.0;
-
-    //r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
-    //y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
-    /*
-     // rysujemy wierzch sfery:
-     vertices.push(0.0, bigR, 0.0,  0.0, 1.0, 0.0,  t0x, t0y);
-     upCape++;
-     for(j = 0; j <= accuracy; j += 2){
-     p1x = r1 * Math.cos(j * alpha);
-     p1z = r1 * Math.sin(j * alpha);
-     p2x = r1 * Math.cos((j + 1) * alpha);
-     p2z = r1 * Math.sin((j + 1) * alpha);
-
-     calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
-
-     vertices.push(p1x,y1,p1z,  p2x,y1,p2z);
-     normals.push(Nx,-Ny,Nz,  Nx,-Ny,Nz);
-     uvCoords.push(t3x,t3y,  t4x,t4y);
-     indices.push(peakIndex, );
-
-     upCape += 2;
-     }
-
-     for(i; i <= accuracy; i++){
-     // aktualizujemy dlugosc r1, r2, y1 i y2:
-     r1 = bigR * Math.sin(i * beta);
-     r2 = bigR * Math.sin((i + 1) * beta);
-     y1 = bigR * Math.cos(i * beta);
-     y2 = bigR * Math.cos((i + 1) * beta);
-
-     for(j = 0; j <= accuracy; j++){
-     // poziom I punktow:
-     p1x = r1 * Math.cos(j * alpha);
-     p1z = r1 * Math.sin(j * alpha);
-     p2x = r1 * Math.cos((j + 1) * alpha);
-     p2z = r1 * Math.sin((j + 1) * alpha);
-     // poziom II punktow:
-     p3x = r2 * Math.cos(j * alpha);
-     p3z = r2 * Math.sin(j * alpha);
-     p4x = r2 * Math.cos((j + 1) * alpha);
-     p4z = r2 * Math.sin((j + 1) * alpha);
-
-     // wsadzamy punkty do tablicy:
-     calculateNormal(p1x, y1, p1z, p2x, y1, p2z, p4x, y2, p4z);
-     vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
-     vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t2x, t2y);
-     vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-     calculateNormal(p4x, y2, p4z, p3x, y2, p3z, p1x, y1, p1z);
-     vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-     vertices.push(p3x, y2, p3z, Nx, Ny, Nz, t3x, t3y);
-     vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
-
-     middle += 6;
-     }
-     }
-
-     // rysujemy spod sfery:
-     vertices.push(0.0, -bigR, 0.0,  0.0, -1.0, 0.0,  t0x, t0y);
-     downCape++;
-     for(j = 0; j <= accuracy; j += 2){
-     p1x = r1 * Math.cos(j * alpha);
-     p1z = r1 * Math.sin(j * alpha);
-     p2x = r1 * Math.cos((j + 1) * alpha);
-     p2z = r1 * Math.sin((j + 1) * alpha);
-
-     calculateNormal(0.0, -bigR, 0.0, p1x, -y1, p1z, p2x, -y1, p2z);
-
-     vertices.push(p1x, -y1, p1z, Nx, Ny, Nz, t3x, t3y);
-     vertices.push(p2x, -y1, p2z, Nx, Ny, Nz, t4x, t4y);
-
-     downCape += 2;
-     }
-     */
-
-
-
-    var SPHERE_DIV = accuracy;
-
-    var index = vertices.length / 3;                // ostatni uzyty indeks
-
+function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
     var i, ai, si, ci;
     var j, aj, sj, cj;
     var p1, p2;
     var x, y, z;
+    var u, v;
 
-    //var positions = [];
-    //var indices = [];
-
+    var index = indices.length;
     // Generate coordinates
     for (j = 0; j <= SPHERE_DIV; j++) {
         aj = j * Math.PI / SPHERE_DIV;
@@ -464,9 +370,8 @@ function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
             x = si * sj;
             y = cj;
             z = ci * sj;
-
-            var u = 1 - (i / SPHERE_DIV);
-            var v = 1 - (j / SPHERE_DIV);
+            u = 1 - (i / SPHERE_DIV);
+            v = 1 - (j / SPHERE_DIV);
 
             vertices.push(bigR * x, bigR * y, bigR * z);
             normals.push(x, y, z);
@@ -474,13 +379,11 @@ function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
         }
     }
 
-    //console.log(positions);
-
     // Generate indices
-    for (j = 0; j < SPHERE_DIV; j++) {
-        for (i = 0; i < SPHERE_DIV; i++) {
-            p1 = j * (SPHERE_DIV+1) + i;
-            p2 = p1 + (SPHERE_DIV+1);
+    for (j = 0; j <= SPHERE_DIV; j++) {
+        for (i = 0; i <= SPHERE_DIV; i++) {
+            p1 = j * (SPHERE_DIV + 1) + i;
+            p2 = p1 + (SPHERE_DIV + 1);
 
             indices.push(p1);
             indices.push(p2);
@@ -489,6 +392,10 @@ function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
             indices.push(p1 + 1);
             indices.push(p2);
             indices.push(p2 + 1);
+
+            //indices.push(p2);
+            //indices.push(p2+1);
+            //indices.push(p1 + 1);
         }
     }
 }
@@ -540,23 +447,22 @@ function drawStuff() {
 
     // tworzenie listy punktow: ========================================================================================
     // podloze: ------------------------------------------------
-    var pre_vertices = [
+    var vertices = [
         -0.5,-0.5,-0.5,  -0.5,-0.5,0.5,  0.5,-0.5,-0.5,  0.5,-0.5,0.5
     ];
-    var pre_normals = [
+    var normals = [
         0.0,1.0,0.0,  0.0,1.0,0.0,  0.0,1.0,0.0,  0.0,1.0,0.0
     ];
-    var pre_uvCoords = [
+    var uvCoords = [
         0.0,0.0,  0.0,1.0,  1.0,0.0,  1.0,1.0
     ];
-    var pre_indices = [
+    var indices = [
         0, 1, 2,  2, 3, 1
     ];
-    var floorN = pre_indices.length;
-    console.log(pre_indices.length);
+    var floorN = indices.length;
 
     // szescian: -----------------------------------------------
-    pre_vertices.push(
+    vertices.push(
         -0.1,-0.1, 0.1,   0.1,-0.1, 0.1,  -0.1,-0.1,-0.1,   0.1,-0.1,-0.1, // down
         -0.1,-0.1,-0.1,   0.1,-0.1,-0.1,  -0.1, 0.1,-0.1,   0.1, 0.1,-0.1, // back
         -0.1,-0.1, 0.1,  -0.1,-0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1, // left
@@ -564,7 +470,7 @@ function drawStuff() {
         0.1,-0.1, 0.1,   0.1, 0.1, 0.1,   0.1,-0.1,-0.1,   0.1, 0.1,-0.1, // right
         0.1, 0.1, 0.1,   0.1, 0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1  // up
     );
-    pre_normals.push(
+    normals.push(
         0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0, // down
         0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0, // back
         -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0, // left
@@ -572,7 +478,7 @@ function drawStuff() {
         1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0, // right
         0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0  // up
     );
-    pre_uvCoords.push(
+    uvCoords.push(
         0.5,  0.5,   1.0,  0.5,   0.5,  0.75,   1.0,  0.75, // down
         0.5,  0.0,   1.0,  0.0,   0.5,  0.25,   1.0,  0.25, // back
         0.0,  0.5,   0.0,  0.25,  0.5,  0.5,    0.5,  0.25, // left
@@ -580,7 +486,7 @@ function drawStuff() {
         1.0,  0.5,   0.5,  0.5,   1.0,  0.25,   0.5,  0.25, // right
         0.5,  0.75,  0.5,  0.5,   0.0,  0.75,   0.0,  0.5   // up
     );
-    pre_indices.push(
+    indices.push(
         4,  5,  6,   5,  7,  6, // down
         8, 10,  9,   9, 10, 11, // back
         12, 14, 13,  13, 14, 15, // left
@@ -588,15 +494,11 @@ function drawStuff() {
         20, 21, 22,  21, 23, 22, // right
         24, 25, 26,  25, 26, 27  // up
     );
-    console.log(pre_indices.length);
-    var cubeN = pre_indices.length - floorN;
+    var cubeN = indices.length - floorN;
 
-    console.log(pre_indices);
-
-
-    drawSphere(bigR, accuracy, pre_vertices, pre_normals, pre_uvCoords, pre_indices);
-    console.log(pre_indices.length);
-    var sphereN = pre_indices.length - (floorN + cubeN);
+    drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices);
+    console.log('indices =', indices.length);
+    var sphereN = indices.length - (floorN + cubeN);
 
 
     console.log('floorN =', floorN);
@@ -604,40 +506,34 @@ function drawStuff() {
     console.log('sphereN =', sphereN);
 
 
-    console.log(pre_indices);
-    //var texturedVertices = new Float32Array(vertices);
-
-    var vertices = new Float32Array(pre_vertices);
-    var normals  = new Float32Array(pre_normals);
-    var uvCoords = new Float32Array(pre_uvCoords);
-    var indices  = new Uint8Array(pre_indices);
+    console.log(indices);
 
 
     // tworzenie buforow: ==============================================================================================
     var verticesBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
     var a_Position = gl.getAttribLocation(gl.program, 'a_Position');    // pozycja w przestrzeni
     gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, 0, 0);
 
 
     var normalBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
     var a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');        // wektor normalny
     gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, 0, 0);
 
 
     var uvCoordsBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, uvCoordsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, uvCoords, gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvCoords), gl.STATIC_DRAW);
     var a_TextCoord = gl.getAttribLocation(gl.program, 'a_TexCoord');   // wspolrzedne tekstur
     gl.vertexAttribPointer(a_TextCoord, 2, gl.FLOAT, false, 0, 0);
 
 
     var indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
 
     gl.enableVertexAttribArray(a_Position);
     gl.enableVertexAttribArray(a_Normal);
