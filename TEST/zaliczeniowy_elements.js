@@ -27,11 +27,11 @@ var FSHADER_SOURCE =
     'uniform sampler2D uSampler;\n' +
     'varying vec2 vTexCoord;\n' +
     'varying vec3 vNormal;\n' +
-    // parametry zrodla swiatla:
+        // parametry zrodla swiatla:
     'const vec3 source_ambient_color  = vec3(0.5, 0.5, 0.5);\n' +
     'const vec3 source_diffuse_color  = vec3(1.5, 1.5, 1.5);\n' +
     'const vec3 source_direction      = vec3(0.58, 0.58, -0.58);\n' +
-    // parametry materialu:
+        // parametry materialu:
     'const vec3 mat_ambient_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const vec3 mat_diffuse_color  = vec3(1.0, 1.0, 1.0);\n' +
     'const float mat_shininess     = 10.0;\n' +
@@ -366,76 +366,76 @@ function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
 
     //r1 = bigR * Math.sin(i * beta);     // aktualizujemy dlugosc r
     //y1 = bigR * Math.cos(i * beta);     // aktualizujemy dlugosc y1
-/*
-    // rysujemy wierzch sfery:
-    vertices.push(0.0, bigR, 0.0,  0.0, 1.0, 0.0,  t0x, t0y);
-    upCape++;
-    for(j = 0; j <= accuracy; j += 2){
-        p1x = r1 * Math.cos(j * alpha);
-        p1z = r1 * Math.sin(j * alpha);
-        p2x = r1 * Math.cos((j + 1) * alpha);
-        p2z = r1 * Math.sin((j + 1) * alpha);
+    /*
+     // rysujemy wierzch sfery:
+     vertices.push(0.0, bigR, 0.0,  0.0, 1.0, 0.0,  t0x, t0y);
+     upCape++;
+     for(j = 0; j <= accuracy; j += 2){
+     p1x = r1 * Math.cos(j * alpha);
+     p1z = r1 * Math.sin(j * alpha);
+     p2x = r1 * Math.cos((j + 1) * alpha);
+     p2z = r1 * Math.sin((j + 1) * alpha);
 
-        calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
+     calculateNormal(0.0, bigR, 0.0, p1x, y1, p1z, p2x, y1, p2z);
 
-        vertices.push(p1x,y1,p1z,  p2x,y1,p2z);
-        normals.push(Nx,-Ny,Nz,  Nx,-Ny,Nz);
-        uvCoords.push(t3x,t3y,  t4x,t4y);
-        indices.push(peakIndex, );
+     vertices.push(p1x,y1,p1z,  p2x,y1,p2z);
+     normals.push(Nx,-Ny,Nz,  Nx,-Ny,Nz);
+     uvCoords.push(t3x,t3y,  t4x,t4y);
+     indices.push(peakIndex, );
 
-        upCape += 2;
-    }
+     upCape += 2;
+     }
 
-    for(i; i <= accuracy; i++){
-        // aktualizujemy dlugosc r1, r2, y1 i y2:
-        r1 = bigR * Math.sin(i * beta);
-        r2 = bigR * Math.sin((i + 1) * beta);
-        y1 = bigR * Math.cos(i * beta);
-        y2 = bigR * Math.cos((i + 1) * beta);
+     for(i; i <= accuracy; i++){
+     // aktualizujemy dlugosc r1, r2, y1 i y2:
+     r1 = bigR * Math.sin(i * beta);
+     r2 = bigR * Math.sin((i + 1) * beta);
+     y1 = bigR * Math.cos(i * beta);
+     y2 = bigR * Math.cos((i + 1) * beta);
 
-        for(j = 0; j <= accuracy; j++){
-            // poziom I punktow:
-            p1x = r1 * Math.cos(j * alpha);
-            p1z = r1 * Math.sin(j * alpha);
-            p2x = r1 * Math.cos((j + 1) * alpha);
-            p2z = r1 * Math.sin((j + 1) * alpha);
-            // poziom II punktow:
-            p3x = r2 * Math.cos(j * alpha);
-            p3z = r2 * Math.sin(j * alpha);
-            p4x = r2 * Math.cos((j + 1) * alpha);
-            p4z = r2 * Math.sin((j + 1) * alpha);
+     for(j = 0; j <= accuracy; j++){
+     // poziom I punktow:
+     p1x = r1 * Math.cos(j * alpha);
+     p1z = r1 * Math.sin(j * alpha);
+     p2x = r1 * Math.cos((j + 1) * alpha);
+     p2z = r1 * Math.sin((j + 1) * alpha);
+     // poziom II punktow:
+     p3x = r2 * Math.cos(j * alpha);
+     p3z = r2 * Math.sin(j * alpha);
+     p4x = r2 * Math.cos((j + 1) * alpha);
+     p4z = r2 * Math.sin((j + 1) * alpha);
 
-            // wsadzamy punkty do tablicy:
-            calculateNormal(p1x, y1, p1z, p2x, y1, p2z, p4x, y2, p4z);
-            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
-            vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t2x, t2y);
-            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-            calculateNormal(p4x, y2, p4z, p3x, y2, p3z, p1x, y1, p1z);
-            vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
-            vertices.push(p3x, y2, p3z, Nx, Ny, Nz, t3x, t3y);
-            vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
+     // wsadzamy punkty do tablicy:
+     calculateNormal(p1x, y1, p1z, p2x, y1, p2z, p4x, y2, p4z);
+     vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
+     vertices.push(p2x, y1, p2z, Nx, Ny, Nz, t2x, t2y);
+     vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
+     calculateNormal(p4x, y2, p4z, p3x, y2, p3z, p1x, y1, p1z);
+     vertices.push(p4x, y2, p4z, Nx, Ny, Nz, t4x, t4y);
+     vertices.push(p3x, y2, p3z, Nx, Ny, Nz, t3x, t3y);
+     vertices.push(p1x, y1, p1z, Nx, Ny, Nz, t1x, t1y);
 
-            middle += 6;
-        }
-    }
+     middle += 6;
+     }
+     }
 
-    // rysujemy spod sfery:
-    vertices.push(0.0, -bigR, 0.0,  0.0, -1.0, 0.0,  t0x, t0y);
-    downCape++;
-    for(j = 0; j <= accuracy; j += 2){
-        p1x = r1 * Math.cos(j * alpha);
-        p1z = r1 * Math.sin(j * alpha);
-        p2x = r1 * Math.cos((j + 1) * alpha);
-        p2z = r1 * Math.sin((j + 1) * alpha);
+     // rysujemy spod sfery:
+     vertices.push(0.0, -bigR, 0.0,  0.0, -1.0, 0.0,  t0x, t0y);
+     downCape++;
+     for(j = 0; j <= accuracy; j += 2){
+     p1x = r1 * Math.cos(j * alpha);
+     p1z = r1 * Math.sin(j * alpha);
+     p2x = r1 * Math.cos((j + 1) * alpha);
+     p2z = r1 * Math.sin((j + 1) * alpha);
 
-        calculateNormal(0.0, -bigR, 0.0, p1x, -y1, p1z, p2x, -y1, p2z);
+     calculateNormal(0.0, -bigR, 0.0, p1x, -y1, p1z, p2x, -y1, p2z);
 
-        vertices.push(p1x, -y1, p1z, Nx, Ny, Nz, t3x, t3y);
-        vertices.push(p2x, -y1, p2z, Nx, Ny, Nz, t4x, t4y);
+     vertices.push(p1x, -y1, p1z, Nx, Ny, Nz, t3x, t3y);
+     vertices.push(p2x, -y1, p2z, Nx, Ny, Nz, t4x, t4y);
 
-        downCape += 2;
-    }
-*/
+     downCape += 2;
+     }
+     */
 
 
 
@@ -491,10 +491,6 @@ function drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices){
             indices.push(p2 + 1);
         }
     }
-
-
-
-    //return vertices;
 }
 
 
@@ -556,8 +552,8 @@ function drawStuff() {
     var pre_indices = [
         0, 1, 2,  2, 3, 1
     ];
-    var floorN = pre_indices.length / 3;
-    console.log(pre_indices.length / 3);
+    var floorN = pre_indices.length;
+    console.log(pre_indices.length);
 
     // szescian: -----------------------------------------------
     pre_vertices.push(
@@ -565,16 +561,16 @@ function drawStuff() {
         -0.1,-0.1,-0.1,   0.1,-0.1,-0.1,  -0.1, 0.1,-0.1,   0.1, 0.1,-0.1, // back
         -0.1,-0.1, 0.1,  -0.1,-0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1, // left
         -0.1,-0.1, 0.1,   0.1,-0.1, 0.1,  -0.1, 0.1, 0.1,   0.1, 0.1, 0.1, // front
-         0.1,-0.1, 0.1,   0.1, 0.1, 0.1,   0.1,-0.1,-0.1,   0.1, 0.1,-0.1, // right
-         0.1, 0.1, 0.1,   0.1, 0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1  // up
+        0.1,-0.1, 0.1,   0.1, 0.1, 0.1,   0.1,-0.1,-0.1,   0.1, 0.1,-0.1, // right
+        0.1, 0.1, 0.1,   0.1, 0.1,-0.1,  -0.1, 0.1, 0.1,  -0.1, 0.1,-0.1  // up
     );
     pre_normals.push(
-         0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0, // down
-         0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0, // back
+        0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0,   0.0,-1.0, 0.0, // down
+        0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0,   0.0, 0.0,-1.0, // back
         -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0,  -1.0, 0.0, 0.0, // left
-         0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0, // front
-         1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0, // right
-         0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0  // up
+        0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0,   0.0, 0.0, 1.0, // front
+        1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0,   1.0, 0.0, 0.0, // right
+        0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0,   0.0, 1.0, 0.0  // up
     );
     pre_uvCoords.push(
         0.5,  0.5,   1.0,  0.5,   0.5,  0.75,   1.0,  0.75, // down
@@ -585,22 +581,22 @@ function drawStuff() {
         0.5,  0.75,  0.5,  0.5,   0.0,  0.75,   0.0,  0.5   // up
     );
     pre_indices.push(
-         4,  5,  6,   5,  7,  6, // down
-         8, 10,  9,   9, 10, 11, // back
+        4,  5,  6,   5,  7,  6, // down
+        8, 10,  9,   9, 10, 11, // back
         12, 14, 13,  13, 14, 15, // left
         16, 18, 17,  17, 18, 19, // front
         20, 21, 22,  21, 23, 22, // right
         24, 25, 26,  25, 26, 27  // up
     );
-    console.log(pre_indices.length / 3);
-    var cubeN = pre_indices.length / 3 - floorN;
+    console.log(pre_indices.length);
+    var cubeN = pre_indices.length - floorN;
 
     console.log(pre_indices);
 
 
     drawSphere(bigR, accuracy, pre_vertices, pre_normals, pre_uvCoords, pre_indices);
-    console.log(pre_indices.length / 3);
-    var sphereN = pre_indices.length / 3 - (floorN + cubeN);
+    console.log(pre_indices.length);
+    var sphereN = pre_indices.length - (floorN + cubeN);
 
 
     console.log('floorN =', floorN);
@@ -655,8 +651,8 @@ function drawStuff() {
     var u_Sampler    = gl.getUniformLocation(gl.program, 'uSampler');        // sampler tekstury
 
     document.onkeydown = function(ev){ keydown(ev); };  // uruchamiamy obsluge klawiszy
-    setLookAt(0.0, -0.50, 0.20, 0, 0, 0, 0, 1, 0);
-    //setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
+    //setLookAt(0.0, -0.50, 0.20, 0, 0, 0, 0, 1, 0);
+    setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
 
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
     gl.uniformMatrix4fv(rMatrix, false, identity);
@@ -694,22 +690,17 @@ function drawStuff() {
         gl.uniformMatrix4fv(tMatrix, false, identity);
         gl.uniformMatrix4fv(rMatrix, false, identity);
         gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_BYTE, 0);
-        //gl.drawArrays(gl.TRIANGLES, 0, floorN);
 
         // ustawiam rotacje dla szescianu i go rysuje:
         gl.uniform1i(u_Sampler, 1);
         gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
         gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_BYTE, floorN);
-        //gl.drawArrays(gl.TRIANGLES, floorN, cubeN);
 
         // ustawiam wyjsciowa rotacje i rysuje sfere:
         gl.uniform1i(u_Sampler, 2);
         gl.uniformMatrix4fv(tMatrix, false, transMatrix);
         gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
         gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_BYTE, floorN + cubeN);
-        //gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN, upCape);
-        //gl.drawArrays(gl.TRIANGLES, floorN + cubeN + upCape, middle);
-        //gl.drawArrays(gl.TRIANGLE_FAN, floorN + cubeN + upCape + middle, downCape);
 
 
         requestAnimationFrame(tick);    // request that the browser calls tick
