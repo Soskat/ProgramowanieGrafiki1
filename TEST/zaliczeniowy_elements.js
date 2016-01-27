@@ -356,7 +356,10 @@ function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
     var x, y, z;
     var u, v;
 
-    var index = indices.length;
+    var index = vertices.length / 3;
+    console.log('index =', index);
+
+
     // Generate coordinates
     for (j = 0; j <= SPHERE_DIV; j++) {
         aj = j * Math.PI / SPHERE_DIV;
@@ -380,22 +383,20 @@ function drawSphere(bigR, SPHERE_DIV, vertices, normals, uvCoords, indices){
     }
 
     // Generate indices
-    for (j = 0; j <= SPHERE_DIV; j++) {
-        for (i = 0; i <= SPHERE_DIV; i++) {
+    for (j = 0; j < SPHERE_DIV + 2; j++) {
+        for (i = 0; i < SPHERE_DIV + 6; i++) {
             p1 = j * (SPHERE_DIV + 1) + i;
             p2 = p1 + (SPHERE_DIV + 1);
 
-            indices.push(p1);
-            indices.push(p2);
-            indices.push(p1 + 1);
+            if(p1 >= index && p2 < 149){
+                indices.push(p1);
+                indices.push(p2);
+                indices.push(p1 + 1);
 
-            indices.push(p1 + 1);
-            indices.push(p2);
-            indices.push(p2 + 1);
-
-            //indices.push(p2);
-            //indices.push(p2+1);
-            //indices.push(p1 + 1);
+                indices.push(p1 + 1);
+                indices.push(p2);
+                indices.push(p2 + 1);
+            }
         }
     }
 }
@@ -496,8 +497,11 @@ function drawStuff() {
     );
     var cubeN = indices.length - floorN;
 
+    var fcV = vertices.length / 3;
+
+    var fcN = indices.length;
+
     drawSphere(bigR, accuracy, vertices, normals, uvCoords, indices);
-    console.log('indices =', indices.length);
     var sphereN = indices.length - (floorN + cubeN);
 
 
@@ -505,7 +509,11 @@ function drawStuff() {
     console.log('cubeN =', cubeN);
     console.log('sphereN =', sphereN);
 
+    console.log('floor + cube indices =', fcN);
+    console.log('Sphere indices =', indices.length - fcN);
 
+    console.log('floor + cube vertices =', fcV)
+    console.log('Sphere vertices =', vertices.length / 3 - fcV)
     console.log(indices);
 
 
@@ -547,7 +555,6 @@ function drawStuff() {
     var u_Sampler    = gl.getUniformLocation(gl.program, 'uSampler');        // sampler tekstury
 
     document.onkeydown = function(ev){ keydown(ev); };  // uruchamiamy obsluge klawiszy
-    //setLookAt(0.0, -0.50, 0.20, 0, 0, 0, 0, 1, 0);
     setLookAt(0.20, -0.10, 0.30, 0, 0, 0, 0, 1, 0);
 
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMatrix);
@@ -582,20 +589,20 @@ function drawStuff() {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         // ustawiam wyjsciowa rotacje i rysuje podloze:
-        gl.uniform1i(u_Sampler, 0);
+        //gl.uniform1i(u_Sampler, 0);
         gl.uniformMatrix4fv(tMatrix, false, identity);
         gl.uniformMatrix4fv(rMatrix, false, identity);
-        gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_BYTE, 0);
+        //gl.drawElements(gl.TRIANGLES, floorN, gl.UNSIGNED_BYTE, 0);
 
         // ustawiam rotacje dla szescianu i go rysuje:
-        gl.uniform1i(u_Sampler, 1);
-        gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
-        gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_BYTE, floorN);
+        //gl.uniform1i(u_Sampler, 1);
+        //gl.uniformMatrix4fv(rMatrix, false, rotMatrixCube);
+        //gl.drawElements(gl.TRIANGLES, cubeN, gl.UNSIGNED_BYTE, floorN);
 
         // ustawiam wyjsciowa rotacje i rysuje sfere:
         gl.uniform1i(u_Sampler, 2);
-        gl.uniformMatrix4fv(tMatrix, false, transMatrix);
-        gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
+        //gl.uniformMatrix4fv(tMatrix, false, transMatrix);
+        //gl.uniformMatrix4fv(rMatrix, false, rotMatrixSphere);
         gl.drawElements(gl.TRIANGLES, sphereN, gl.UNSIGNED_BYTE, floorN + cubeN);
 
 
